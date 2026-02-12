@@ -197,6 +197,7 @@
     .btn-query  { background-color: #FFEB3B; color: black; }
     .btn-new    { background-color: #FF8C00; }
     .btn-chalk  { background-color: #FF69B4; color: black; }
+    .btn-settings { background-color: #FF6347; color: white; } /* ✅ 將進階設定按鈕樣式移回 CSS 統一控管 */
     .btn-cancel { background-color: #6c757d; }
     
     button:hover { opacity: 0.8; transform: scale(1.05); }
@@ -224,7 +225,7 @@
     .btn-red { background-color: #FF4D4D; color: white; }
     .btn-clear { background-color: yellow; color: black; }
 
-    /* 進階設定按鈕通用類別 */
+    /* 進階設定區的外部連結按鈕 */
     .settings-btn {
       width: 220px;
       color: white;
@@ -251,7 +252,7 @@
       .button-container { padding: 5px; gap: 8px; }
       .button-container button { 
         width: calc(50% - 8px); 
-        font-size: 20px; 
+        font-size: 20px; /* ✅ 手機版一律為 20px */
         padding: 12px 5px; 
         margin: 0; 
         flex-shrink: 0; 
@@ -1561,15 +1562,9 @@ document.addEventListener("DOMContentLoaded", function() {
     identityToggleBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.2)";
   }
 
-  let settingsButton = document.querySelector(".btn-settings");
-  if (settingsButton) {
-    settingsButton.style.backgroundColor = "#FF6347"; 
-    settingsButton.style.color = "white";
-    settingsButton.style.fontSize = "28px";
-    settingsButton.style.padding = "10px 22px";
-    settingsButton.style.borderRadius = "10px";
-    settingsButton.style.boxShadow = "3px 3px 6px rgba(0, 0, 0, 0.4)";
-  }
+  // 移除舊的 JS 寬度、間距動態控制（現在全部由 CSS .form-group 和 .field-wrapper 接管控制了）
+  
+  // ✅ 移除在 JavaScript 中覆寫設定按鈕樣式的區塊，交由 CSS 控制
 
 });
 
@@ -1850,38 +1845,6 @@ document.addEventListener("DOMContentLoaded", () => {
       isSubmitting = false;
     });
   }
-});
-
-document.addEventListener("awesomplete-open", function(e) {
-  const input = e.target;
-  let ul = input.nextElementSibling;
-  if (!ul || !ul.classList.contains('awesomplete__list')) {
-    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
-    if (!ul) return;
-  }
-  const inputRect = input.getBoundingClientRect();
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-  ul.style.position = "absolute";
-  ul.style.left = (inputRect.left + scrollLeft - 10) + "px";
-  ul.style.top = (inputRect.bottom + scrollTop + 5) + "px"; 
-  ul.style.zIndex = 99999;
-});
-
-document.addEventListener("awesomplete-close", function(e) {
-  const input = e.target;
-  let ul = input.nextElementSibling;
-  if (!ul || !ul.classList.contains('awesomplete__list')) {
-    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
-    if (!ul) return;
-  }
-  ul.style.position = "";
-  ul.style.left = "";
-  ul.style.top = "";
-  ul.style.minWidth = "";
-  ul.style.width = "";
-  ul.style.zIndex = "";
 });
 
 function showFormMessage(formId, message, color, size, timeout) {

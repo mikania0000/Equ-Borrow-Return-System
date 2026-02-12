@@ -2,9 +2,10 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- ✅ 確保手機端比例正確，並防止輸入時畫面縮放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>鳳甲國中設備管理系統</title>
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/awesomplete@1.1.5/awesomplete.css" />
   <style>
     body {
       font-family: "華康中儷體", sans-serif;
@@ -22,6 +23,7 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
     }
     h1 {
       font-size: 65px;
@@ -61,7 +63,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       gap: 15px;
       background-color: #eee;
       border: 1px solid #ccc;
@@ -91,22 +93,23 @@
       width: 100%;
     }
     .form-group label {
-      width: 150px; /* 固定標籤寬度，確保所有輸入框左側對齊 */
+      width: 150px;
       font-size: 28px;
       text-align: right;
       margin-right: 20px;
       flex-shrink: 0;
     }
     .form-group .field-wrapper {
-      width: 380px; /* 統一所有輸入框容器寬度 */
+      width: 380px;
       display: flex;
       align-items: center;
       gap: 10px;
       justify-content: flex-start;
     }
     .form-group .field-wrapper input[type="text"],
-    .form-group .field-wrapper select {
-      flex: 1; /* 填滿容器寬度 */
+    .form-group .field-wrapper select,
+    .form-group .field-wrapper input[type="password"] {
+      flex: 1;
       width: 100%;
       height: 52px;
       font-size: 26px;
@@ -122,22 +125,22 @@
     }
 
     /* ==========================================
-       ✅ Awesomplete 自動完成套件修正 (強制吸附輸入框右側)
+       ✅ Awesomplete 自動完成套件修正 (預設電腦版靠右)
        ========================================== */
     .awesomplete {
       display: block !important;
       width: 100% !important;
       flex: 1;
-      position: relative; /* 確保下拉清單以輸入框為對齊基準 */
+      position: relative;
     }
     .awesomplete > ul {
       position: absolute !important;
-      left: 100% !important; /* 🌟 讓清單出現在右側 */
-      top: 0 !important; /* 🌟 頂部與輸入框對齊 */
-      margin-left: 15px !important; /* 🌟 增加與輸入框的距離，避免貼太近 */
+      left: 100% !important; /* 🌟 電腦版出現在右側 */
+      top: 0 !important;
+      margin-left: 15px !important;
       margin-top: 0 !important;
       z-index: 99999 !important;
-      width: 260px !important; /* 🌟 給定適當的寬度 */
+      width: 260px !important;
       max-height: 350px !important;
       overflow-y: auto !important;
       font-size: 26px !important;
@@ -171,6 +174,7 @@
       justify-content: center;
       gap: 20px;
       margin-top: 15px;
+      flex-wrap: wrap;
     }
     .button-group button {
       width: 140px;
@@ -192,7 +196,7 @@
     .btn-repair { background-color: #FF4500; }
     .btn-query  { background-color: #FFEB3B; color: black; }
     .btn-new    { background-color: #FF8C00; }
-    .btn-chalk  { background-color: #FF69B4; color: black; margin-left: auto; }
+    .btn-chalk  { background-color: #FF69B4; color: black; }
     .btn-cancel { background-color: #6c757d; }
     
     button:hover { opacity: 0.8; transform: scale(1.05); }
@@ -217,17 +221,89 @@
       text-align: center;
     }
 
-    .btn-red {
-      background-color: #FF4D4D;
+    .btn-red { background-color: #FF4D4D; color: white; }
+    .btn-clear { background-color: yellow; color: black; }
+
+    /* 進階設定按鈕通用類別 */
+    .settings-btn {
+      width: 220px;
       color: white;
+      font-size: 22px;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
     }
-    .btn-clear {
-      background-color: yellow;
-      color: black;
+    .settings-btn-dark { color: black !important; }
+
+    /* ==========================================
+       📱 手機版響應式設計 (RWD)
+       ========================================== */
+    @media (max-width: 768px) {
+      body { padding: 0; }
+      .container { width: 100%; padding: 15px 10px; margin-top: 0; border-radius: 0; }
+      
+      h1 { font-size: 36px; margin-bottom: 10px; }
+      h2 { font-size: 26px; }
+      .form-header { padding: 5px 15px; }
+
+      /* 主導覽按鈕 (兩兩並排) */
+      .button-container { padding: 5px; gap: 8px; }
+      .button-container button { 
+        width: calc(50% - 8px); 
+        font-size: 20px; 
+        padding: 12px 5px; 
+        margin: 0; 
+        flex-shrink: 0; 
+      }
+
+      /* 表單群組改為上下排列 */
+      .form-group { flex-direction: column; align-items: stretch; margin-bottom: 20px; }
+      .form-group label { 
+        width: 100%; 
+        text-align: left; 
+        font-size: 20px; 
+        margin-bottom: 5px; 
+        color: #444; 
+        font-weight: bold;
+      }
+      .form-group .field-wrapper { width: 100%; flex-direction: column; gap: 8px; }
+      .form-group .field-wrapper input[type="text"],
+      .form-group .field-wrapper select { font-size: 20px; height: 50px; }
+      
+      /* 掃描按鈕跟輸入框一樣寬 */
+      .btn-scan-small { width: 100%; height: 50px; font-size: 20px; }
+
+      /* ✅ 手機版 Awesomplete 自動完成移回下方 */
+      .awesomplete > ul { 
+        left: 0 !important; 
+        top: 100% !important; 
+        margin-left: 0 !important; 
+        margin-top: 5px !important;
+        width: 100% !important; 
+        font-size: 22px !important;
+        max-height: 250px !important;
+      }
+
+      /* 表單底部操作按鈕 */
+      .button-group { flex-direction: column; width: 100%; gap: 10px; }
+      .button-group button { width: 100%; font-size: 22px; margin: 0; }
+
+      /* 查詢結果表格防破版 (橫向滾動) */
+      #query-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; background: white; padding: 5px; border-radius: 5px;}
+      .query-table th, .query-table td { white-space: nowrap; font-size: 16px; padding: 8px; }
+      
+      /* 進階設定按鈕佔滿寬度 */
+      .settings-btn { width: 100%; font-size: 20px; }
+      .settings-wrapper { flex-direction: column; }
+
+      /* 修正對話框寬度 */
+      #password-dialog, #delete-confirm-dialog { width: 90% !important; box-sizing: border-box; }
+      .repair-card { padding: 20px !important; width: 100% !important; box-sizing: border-box; }
+      .repair-actions { flex-direction: column; gap: 10px !important; }
+      .repair-actions button { width: 100% !important; }
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
   <div class="container">
@@ -412,18 +488,18 @@
       <p id="repair-result"></p>
 
       <div id="repair-options" style="display: none; margin-top: 30px; text-align: center;">
-        <div style="display: block; margin: auto; background-color: #fffde7; border: 2px solid #fbc02d; border-radius: 16px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); padding: 30px 40px; max-width: 520px;">
+        <div class="repair-card" style="display: block; margin: auto; background-color: #fffde7; border: 2px solid #fbc02d; border-radius: 16px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); padding: 30px 40px; max-width: 520px;">
           <form style="display: flex; flex-direction: column; align-items: center; gap: 25px;">
-            <select id="repair-status-select" style="font-size: 28px; padding: 10px 20px; border-radius: 10px; width: 100%; max-width: 360px; border: 2px solid #ccc;">
+            <select id="repair-status-select" style="font-size: 28px; padding: 10px 20px; border-radius: 10px; width: 100%; border: 2px solid #ccc;">
               <option value="">請選擇設備狀態</option>
               <option value="REPAIR">報修（維修中）</option>
               <option value="ENABLE">啟用（可借用）</option>
               <option value="UNASSIGNED">未編（未編設備）</option>
             </select>
 
-            <div style="display: flex; gap: 30px;">
-              <button type="button" onclick="submitRepairStatusChange()" style="font-size: 28px; padding: 10px 24px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; min-width: 120px;">✅ 確定</button>
-              <button type="button" onclick="cancelRepairStatusChange()" style="font-size: 28px; padding: 10px 24px; background-color: #B0BEC5; color: black; border: none; border-radius: 8px; min-width: 120px;">❌ 取消</button>
+            <div class="repair-actions" style="display: flex; gap: 30px; width: 100%; justify-content: center;">
+              <button type="button" onclick="submitRepairStatusChange()" style="font-size: 24px; padding: 10px 24px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; flex: 1;">✅ 確定</button>
+              <button type="button" onclick="cancelRepairStatusChange()" style="font-size: 24px; padding: 10px 24px; background-color: #B0BEC5; color: black; border: none; border-radius: 8px; flex: 1;">❌ 取消</button>
             </div>
           </form>
         </div>
@@ -439,19 +515,19 @@
         <h2>進階設定</h2>
       </div>
 
-      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px;">
-        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbyC4Cd47_wv7-mVSgOLjKBa_kBrVw7R-ql49bZWNnvMGcZbQFCXuejeV7DQwnvsdyJV/exec')" style="width: 220px;background-color:#FF6B6B; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">冷氣儲值HTML</button>
-        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/1_MfJZramhgQVdjWRqOjCWNKBW14P9yw4l9GFknl_iS8/edit?gid=1451666756')" style="width: 220px;background-color:#4DD0E1; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備借用 EXCEL</button>
-        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbyReP2_g_Da25Qh2Bxa44b-awe3rpJWu258e7cko-is1yFdOFJ2YyUIeomOmVxocSbX/exec')" style="width: 220px;background-color:#81C784; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備設定HTML</button>
-        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/16Btq6gd5j8ugpqFwRtQ-lpAgg9_Exn80UUrkhc4OYQE/edit?gid=578985482#gid=578985482')" style="width: 220px;background-color:#FFD54F; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">粉筆板擦 EXCEL</button>
-        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbwlC6kNYqplljKaQe6q9aamukFhLaVr2x-HTa3IOwINunxjK0RnDZ2bJHOwq-NeXQPJYA/exec')" style="width: 220px;background-color:#BA68C8; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">期末歸還 HTML</button>
-        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/1PQg7L9igcyy584fekpseDQZ75KnXwsby0FaEyQaiX5o/edit?gid=0#gid=0')" style="width: 220px;background-color:#F06292; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備維修 EXCEL</button>
-        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbwJJ2_4S8SjcgydQxMqiHBwACNFFVblbXsFQ7Fq84bD6st8BjnBIDZHiJowBrN2MIB9/exec')" style="width: 220px;background-color:#64B5F6; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備維修 HTML</button>
-        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbxBnPl_7XPedBwlk4pL3jYHwXteRd2SNegY24QLp6jGVvxCQDgRTXTu1XhF2rcaGh_mIw/exec')" style="width: 220px;background-color:#FF8A65; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備盤點</button>
-        <button onclick="openInNewTab('')" style="width: 220px;background-color:#A1887F; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 9</button>
-        <button onclick="openInNewTab('')" style="width: 220px;background-color:#90CAF9; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 10</button>
-        <button onclick="openInNewTab('')" style="width: 220px;background-color:#AED581; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 11</button>
-        <button onclick="openInNewTab('')" style="width: 220px;background-color:#CE93D8; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 12</button>
+      <div class="settings-wrapper" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px;">
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbyC4Cd47_wv7-mVSgOLjKBa_kBrVw7R-ql49bZWNnvMGcZbQFCXuejeV7DQwnvsdyJV/exec')" class="settings-btn" style="background-color:#FF6B6B;">冷氣儲值HTML</button>
+        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/1_MfJZramhgQVdjWRqOjCWNKBW14P9yw4l9GFknl_iS8/edit?gid=1451666756')" class="settings-btn" style="background-color:#4DD0E1;">設備借用 EXCEL</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbyReP2_g_Da25Qh2Bxa44b-awe3rpJWu258e7cko-is1yFdOFJ2YyUIeomOmVxocSbX/exec')" class="settings-btn" style="background-color:#81C784;">設備設定HTML</button>
+        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/16Btq6gd5j8ugpqFwRtQ-lpAgg9_Exn80UUrkhc4OYQE/edit?gid=578985482#gid=578985482')" class="settings-btn settings-btn-dark" style="background-color:#FFD54F;">粉筆板擦 EXCEL</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbwlC6kNYqplljKaQe6q9aamukFhLaVr2x-HTa3IOwINunxjK0RnDZ2bJHOwq-NeXQPJYA/exec')" class="settings-btn" style="background-color:#BA68C8;">期末歸還 HTML</button>
+        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/1PQg7L9igcyy584fekpseDQZ75KnXwsby0FaEyQaiX5o/edit?gid=0#gid=0')" class="settings-btn" style="background-color:#F06292;">設備維修 EXCEL</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbwJJ2_4S8SjcgydQxMqiHBwACNFFVblbXsFQ7Fq84bD6st8BjnBIDZHiJowBrN2MIB9/exec')" class="settings-btn" style="background-color:#64B5F6;">設備維修 HTML</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbxBnPl_7XPedBwlk4pL3jYHwXteRd2SNegY24QLp6jGVvxCQDgRTXTu1XhF2rcaGh_mIw/exec')" class="settings-btn" style="background-color:#FF8A65;">設備盤點</button>
+        <button onclick="openInNewTab('')" class="settings-btn" style="background-color:#A1887F;">預留按鈕 9</button>
+        <button onclick="openInNewTab('')" class="settings-btn settings-btn-dark" style="background-color:#90CAF9;">預留按鈕 10</button>
+        <button onclick="openInNewTab('')" class="settings-btn settings-btn-dark" style="background-color:#AED581;">預留按鈕 11</button>
+        <button onclick="openInNewTab('')" class="settings-btn settings-btn-dark" style="background-color:#CE93D8;">預留按鈕 12</button>
       </div>
 
       <div class="button-group" style="display: flex; justify-content: center; margin-top: 30px;">
@@ -460,22 +536,34 @@
       <p id="settings-result"></p>
     </div>
 
-  </div> <!-- ✅ 這裡正確閉合了 .container 標籤！ -->
+  </div> 
 
   <!-- ===================== 浮動對話框區 ===================== -->
   <div id="password-dialog" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); text-align:center; z-index:9999;">
     <p style="font-size:24px; font-weight:bold;">請輸入密碼</p>
-    <input id="password-input" type="password" style="font-size:24px; padding:10px; width:80%; border:1px solid #ccc; border-radius:5px;"><br><br>
-    <button onclick="verifyPassword()" style="font-size:20px; padding:8px 16px; background-color:#4CAF50; color:white; border:none; border-radius:5px;">確認</button>
-    <button onclick="closePasswordDialog()" style="font-size:20px; padding:8px 16px; margin-left:10px; background-color:#ccc; color:black; border:none; border-radius:5px;">取消</button>
+    <div class="form-group" style="margin: 15px 0;">
+      <div class="field-wrapper" style="width: 100%;">
+        <input id="password-input" type="password" style="text-align:center;">
+      </div>
+    </div>
+    <div style="display:flex; justify-content:center; gap:10px;">
+      <button onclick="verifyPassword()" style="font-size:20px; padding:10px 20px; background-color:#4CAF50; color:white; border:none; border-radius:5px;">確認</button>
+      <button onclick="closePasswordDialog()" style="font-size:20px; padding:10px 20px; background-color:#ccc; color:black; border:none; border-radius:5px;">取消</button>
+    </div>
     <p id="password-error" style="color:red; font-size:18px; display:none; margin-top:10px;">密碼錯誤，請重試！</p>
   </div>
 
   <div id="delete-confirm-dialog" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#fff; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.15); padding:32px 24px; z-index:9999; text-align:center;">
     <div style="font-size:28px; color:#d32f2f; margin-bottom:16px;">⚠️ 確定要刪除此設備紀錄嗎？</div>
-    <button id="delete-confirm-btn" style="font-size:22px; background:#ff4081; color:#fff; border:none; border-radius:6px; padding:8px 32px; margin:0 12px;">確定</button>
-    <button id="delete-cancel-btn" style="font-size:22px; background:#ccc; color:#333; border:none; border-radius:6px; padding:8px 32px; margin:0 12px;">取消</button>
+    <div style="display:flex; justify-content:center; gap:10px;">
+      <button id="delete-confirm-btn" style="font-size:22px; background:#ff4081; color:#fff; border:none; border-radius:6px; padding:10px 20px;">確定</button>
+      <button id="delete-cancel-btn" style="font-size:22px; background:#ccc; color:#333; border:none; border-radius:6px; padding:10px 20px;">取消</button>
+    </div>
   </div>
+
+<!-- ✅ 移至底部以保證載入順序 -->
+<script src="https://cdn.jsdelivr.net/npm/awesomplete@1.1.5/awesomplete.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
 // ==========================================
@@ -509,26 +597,29 @@ document.addEventListener("DOMContentLoaded", function() {
   if (borrowNameInput) {
     borrowNameInput.addEventListener("input", filterNameList);
 
-    borrowNameInput._awesomplete = new Awesomplete(borrowNameInput, {
-      minChars: 0,
-      maxItems: 30,
-      autoFirst: true,
-      list: [],
-      sort: false,
-    });
+    // ✅ 新增安全檢查，防止外部 CDN 載入失敗導致後續腳本崩潰
+    if (typeof Awesomplete !== 'undefined') {
+      borrowNameInput._awesomplete = new Awesomplete(borrowNameInput, {
+        minChars: 0,
+        maxItems: 30,
+        autoFirst: true,
+        list: [],
+        sort: false,
+      });
 
-    // ⛔ 已刪除原本在這裡覆蓋長寬的硬代碼，交由 CSS 控制
+      borrowNameInput.addEventListener("focus", function() {
+        let current = borrowNameInput.value.trim().toLowerCase();
+        currentList = current === "" ? fullNameList : fullNameList.filter(name => name.toLowerCase().includes(current));
+        updateNameList(currentList);
+        borrowNameInput._awesomplete.evaluate();
+      });
 
-    borrowNameInput.addEventListener("focus", function() {
-      let current = borrowNameInput.value.trim().toLowerCase();
-      currentList = current === "" ? fullNameList : fullNameList.filter(name => name.toLowerCase().includes(current));
-      updateNameList(currentList);
-      borrowNameInput._awesomplete.evaluate();
-    });
-
-    borrowNameInput.addEventListener("awesomplete-selectcomplete", function(e) {
-      borrowNameInput.value = e.text.value;
-    });
+      borrowNameInput.addEventListener("awesomplete-selectcomplete", function(e) {
+        borrowNameInput.value = e.text.value;
+      });
+    } else {
+      console.warn("Awesomplete 尚未載入，自動完成功能已停用。");
+    }
   }
 });
 
@@ -1351,7 +1442,7 @@ function toggleScanner(context) {
       },
       (errorMessage) => {}
     ).catch(err => {
-      console.error('啟動掃描器失敗', err);
+      console.error('啟 ক্যামের器失敗', err);
       container.style.display = 'none';
     });
   }
@@ -1429,8 +1520,10 @@ document.addEventListener("DOMContentLoaded", function() {
 ["scanner-container-borrow", "scanner-container-return"].forEach(id => {
   const container = document.getElementById(id);
   if (container) {
-    container.style.width = "500px";
-    container.style.height = "650px";
+    container.style.width = "100%";
+    container.style.maxWidth = "500px";
+    container.style.height = "auto";
+    container.style.minHeight = "300px";
     container.style.margin = "auto";
     container.style.border = "2px solid #999";
     container.style.borderRadius = "10px";
@@ -1468,7 +1561,6 @@ document.addEventListener("DOMContentLoaded", function() {
     identityToggleBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.2)";
   }
 
-  // 移除舊的 JS 寬度、間距動態控制（現在全部由 CSS .form-group 和 .field-wrapper 接管控制了）
   let settingsButton = document.querySelector(".btn-settings");
   if (settingsButton) {
     settingsButton.style.backgroundColor = "#FF6347"; 
@@ -1760,8 +1852,37 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ✅ 已刪除導致名單位移的舊版 JS 定位計算
-// 全部交給 CSS (left: 0, top: 100%) 來完美吸附輸入框
+document.addEventListener("awesomplete-open", function(e) {
+  const input = e.target;
+  let ul = input.nextElementSibling;
+  if (!ul || !ul.classList.contains('awesomplete__list')) {
+    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
+    if (!ul) return;
+  }
+  const inputRect = input.getBoundingClientRect();
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+  ul.style.position = "absolute";
+  ul.style.left = (inputRect.left + scrollLeft - 10) + "px";
+  ul.style.top = (inputRect.bottom + scrollTop + 5) + "px"; 
+  ul.style.zIndex = 99999;
+});
+
+document.addEventListener("awesomplete-close", function(e) {
+  const input = e.target;
+  let ul = input.nextElementSibling;
+  if (!ul || !ul.classList.contains('awesomplete__list')) {
+    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
+    if (!ul) return;
+  }
+  ul.style.position = "";
+  ul.style.left = "";
+  ul.style.top = "";
+  ul.style.minWidth = "";
+  ul.style.width = "";
+  ul.style.zIndex = "";
+});
 
 function showFormMessage(formId, message, color, size, timeout) {
   const resultElem = document.getElementById(`${formId}-result`);

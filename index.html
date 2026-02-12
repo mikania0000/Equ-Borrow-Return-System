@@ -121,11 +121,32 @@
       opacity: 1;
     }
 
-    /* Awesomplete 自動完成套件修復 */
+    /* ==========================================
+       ✅ Awesomplete 自動完成套件修正 (強制吸附輸入框)
+       ========================================== */
     .awesomplete {
       display: block !important;
       width: 100% !important;
       flex: 1;
+      position: relative; /* 確保下拉清單以輸入框為對齊基準 */
+    }
+    .awesomplete > ul {
+      position: absolute !important;
+      left: 0 !important;
+      top: 100% !important; /* 緊貼在輸入框正下方 */
+      margin-top: 4px !important;
+      z-index: 99999 !important;
+      width: 100% !important; /* 和輸入框一樣寬 */
+      max-height: 350px !important;
+      overflow-y: auto !important;
+      font-size: 26px !important;
+      background: white !important;
+      border: 1px solid #ccc !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
+    }
+    .awesomplete > ul > li {
+      padding: 10px 15px !important;
     }
     
     /* 掃描按鈕專屬樣式 */
@@ -208,7 +229,7 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
-  <div class="container"> <!-- ✅ 確保有開頭並在最下面閉合 -->
+  <div class="container">
     <h1>鳳甲國中設備管理系統</h1>
     <div class="button-container">
       <button class="btn-borrow" onclick="showForm('borrow')">借用</button>
@@ -495,17 +516,7 @@ document.addEventListener("DOMContentLoaded", function() {
       sort: false,
     });
 
-    borrowNameInput.addEventListener("awesomplete-open", function() {
-      const ul = document.querySelector(".awesomplete ul") || document.querySelector(".awesomplete__list");
-      if (ul) {
-        ul.style.minWidth = "180px";
-        ul.style.maxWidth = "240px";
-        ul.style.width = "220px";
-        ul.style.maxHeight = "400px";
-        ul.style.overflowY = "auto";
-        ul.style.fontSize = "24px";
-      }
-    });
+    // ⛔ 已刪除原本在這裡覆蓋長寬的硬代碼，交由 CSS 控制
 
     borrowNameInput.addEventListener("focus", function() {
       let current = borrowNameInput.value.trim().toLowerCase();
@@ -1456,7 +1467,6 @@ document.addEventListener("DOMContentLoaded", function() {
     identityToggleBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.2)";
   }
 
-  // 移除舊的 JS 寬度、間距動態控制（現在全部由 CSS .form-group 和 .field-wrapper 接管控制了）
   let settingsButton = document.querySelector(".btn-settings");
   if (settingsButton) {
     settingsButton.style.backgroundColor = "#FF6347"; 
@@ -1748,37 +1758,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-document.addEventListener("awesomplete-open", function(e) {
-  const input = e.target;
-  let ul = input.nextElementSibling;
-  if (!ul || !ul.classList.contains('awesomplete__list')) {
-    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
-    if (!ul) return;
-  }
-  const inputRect = input.getBoundingClientRect();
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-  ul.style.position = "absolute";
-  ul.style.left = (inputRect.left + scrollLeft - 10) + "px"; // 修正 awesomplete 定位
-  ul.style.top = (inputRect.bottom + scrollTop + 5) + "px"; // 修正 awesomplete 定位
-  ul.style.zIndex = 99999;
-});
-
-document.addEventListener("awesomplete-close", function(e) {
-  const input = e.target;
-  let ul = input.nextElementSibling;
-  if (!ul || !ul.classList.contains('awesomplete__list')) {
-    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
-    if (!ul) return;
-  }
-  ul.style.position = "";
-  ul.style.left = "";
-  ul.style.top = "";
-  ul.style.minWidth = "";
-  ul.style.width = "";
-  ul.style.zIndex = "";
-});
+// ✅ 已刪除導致名單位移的舊版 JS 定位計算
+// 全部交給 CSS (left: 0, top: 100%) 來完美吸附輸入框
 
 function showFormMessage(formId, message, color, size, timeout) {
   const resultElem = document.getElementById(`${formId}-result`);

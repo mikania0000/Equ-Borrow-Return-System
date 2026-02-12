@@ -122,7 +122,7 @@
     }
 
     /* ==========================================
-       ✅ Awesomplete 自動完成套件修正 (強制吸附輸入框)
+       ✅ Awesomplete 自動完成套件修正 (強制吸附輸入框右側)
        ========================================== */
     .awesomplete {
       display: block !important;
@@ -132,11 +132,12 @@
     }
     .awesomplete > ul {
       position: absolute !important;
-      left: 0 !important;
-      top: 100% !important; /* 緊貼在輸入框正下方 */
-      margin-top: 4px !important;
+      left: 100% !important; /* 🌟 讓清單出現在右側 */
+      top: 0 !important; /* 🌟 頂部與輸入框對齊 */
+      margin-left: 15px !important; /* 🌟 增加與輸入框的距離，避免貼太近 */
+      margin-top: 0 !important;
       z-index: 99999 !important;
-      width: 100% !important; /* 和輸入框一樣寬 */
+      width: 260px !important; /* 🌟 給定適當的寬度 */
       max-height: 350px !important;
       overflow-y: auto !important;
       font-size: 26px !important;
@@ -1467,6 +1468,7 @@ document.addEventListener("DOMContentLoaded", function() {
     identityToggleBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.2)";
   }
 
+  // 移除舊的 JS 寬度、間距動態控制（現在全部由 CSS .form-group 和 .field-wrapper 接管控制了）
   let settingsButton = document.querySelector(".btn-settings");
   if (settingsButton) {
     settingsButton.style.backgroundColor = "#FF6347"; 

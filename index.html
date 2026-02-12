@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鳳甲國中設備管理系統</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+  <style>
+    body {
+      font-family: "華康中儷體", sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0px 20px 20px 20px;
+    }
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin-top: 10px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 65px;
+      font-weight: bold;
+      text-align: center;
+      background: linear-gradient(to right, #1E3A8A, #4A90E2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      margin-top: 0;
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeIn 1.5s ease-in-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-size: 40px;
+      margin: 0;
+    }
+    .form-header {
+      display: inline-block;
+      padding: 8px 20px;
+      border: 2px solid #FF8C00;
+      border-radius: 80px;
+      background: linear-gradient(to bottom, #FFD699, #FFB84D);
+      box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: nowrap;
+      gap: 15px;
+      background-color: #eee;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    .form-section {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .form-section.active {
+      display: block;
+    }
+
+    /* ==========================================
+       ✅ 統一表單排版 (Flexbox 置中對齊)
+       ========================================== */
+    .form-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      width: 100%;
+    }
+    .form-group label {
+      width: 150px; /* 固定標籤寬度，確保所有輸入框左側對齊 */
+      font-size: 28px;
+      text-align: right;
+      margin-right: 20px;
+      flex-shrink: 0;
+    }
+    .form-group .field-wrapper {
+      width: 380px; /* 統一所有輸入框容器寬度 */
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-start;
+    }
+    .form-group .field-wrapper input[type="text"],
+    .form-group .field-wrapper select {
+      flex: 1; /* 填滿容器寬度 */
+      width: 100%;
+      height: 52px;
+      font-size: 26px;
+      padding: 8px 12px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .form-group .field-wrapper input::placeholder {
+      font-size: 24px;
+      color: #888;
+      opacity: 1;
+    }
+
+    /* Awesomplete 自動完成套件修復 */
+    .awesomplete {
+      display: block !important;
+      width: 100% !important;
+      flex: 1;
+    }
+    
+    /* 掃描按鈕專屬樣式 */
+    .btn-scan-small {
+      background-color: yellow;
+      color: black;
+      width: 120px;
+      height: 52px;
+      font-size: 18px;
+      font-weight: bold;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      flex-shrink: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 15px;
+    }
+    .button-group button {
+      width: 140px;
+      padding: 10px;
+    }
+
+    button {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 28px;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+    .btn-borrow { background-color: #32CD32; }
+    .btn-return { background-color: #00BFFF; }
+    .btn-repair { background-color: #FF4500; }
+    .btn-query  { background-color: #FFEB3B; color: black; }
+    .btn-new    { background-color: #FF8C00; }
+    .btn-chalk  { background-color: #FF69B4; color: black; margin-left: auto; }
+    .btn-cancel { background-color: #6c757d; }
+    
+    button:hover { opacity: 0.8; transform: scale(1.05); }
+    button:active { opacity: 0.6; transform: scale(0.95); }
+    a { text-decoration: none; }
+    
+    #borrow.form-section { background-color: #d4edda; }
+    #return.form-section { background-color: #d1ecf1; }
+    #repair.form-section { background-color: #f8d7da; }
+    #new.form-section    { background-color: #f1e0d6; }
+    #query.form-section  { background-color: #fff3cd; }
+    #settings.form-section { background-color: #ffe0b2; }
+
+    #borrow-result, #return-result, #new-result, #query-result {
+      font-size: 30px !important;
+      font-weight: bold;
+      margin-top: 15px;
+      width: 100%;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .btn-red {
+      background-color: #FF4D4D;
+      color: white;
+    }
+    .btn-clear {
+      background-color: yellow;
+      color: black;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+  <div class="container"> <!-- ✅ 確保有開頭並在最下面閉合 -->
+    <h1>鳳甲國中設備管理系統</h1>
+    <div class="button-container">
+      <button class="btn-borrow" onclick="showForm('borrow')">借用</button>
+      <button class="btn-return" onclick="showForm('return')">歸還</button>
+      <button class="btn-new" onclick="showForm('new')">新增</button>
+      <button class="btn-query" onclick="showForm('query')">查詢</button>
+      <button class="btn-chalk" onclick="openChalkRegistration()">粉筆板擦登記</button>
+      <button class="btn-settings" onclick="openAdvancedSettings()">進階設定</button>
+    </div>
+    
+    <!-- ===================== 借用設備 ===================== -->
+    <div id="borrow" class="form-section">
+      <div class="form-header">
+        <h2>借用設備</h2>
+      </div>
+
+      <div class="form-group">
+        <label for="borrow-identity">身分</label>
+        <div class="field-wrapper">
+          <select id="borrow-identity">
+            <option value="教師" selected>教師</option>
+            <option value="學生">學生</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="borrow-name">姓名</label>
+        <div class="field-wrapper">
+          <input type="text" id="borrow-name" class="awesomplete" placeholder="🔍 關鍵字查詢" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="borrow-barcode">設備條碼</label>
+        <div class="field-wrapper">
+          <input type="text" id="borrow-barcode" inputmode="numeric" placeholder="請輸入設備條碼">
+          <button class="btn-scan-small" onclick="toggleScanner('borrow')">手機掃描用</button>
+        </div>
+      </div>
+
+      <div id="scanner-container-borrow" style="display:none; margin-top:10px;"></div>
+
+      <div class="form-group">
+        <label for="borrow-unit">借用單位</label>
+        <div class="field-wrapper">
+          <select id="borrow-unit">
+            <option value="">請選擇單位</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="borrow-days">借用天數</label>
+        <div class="field-wrapper">
+          <select id="borrow-days">
+            <option value="1" selected>1天</option>
+            <option value="2">2天</option>
+            <option value="3">3天</option>
+            <option value="7">7天</option>
+            <option value="30">30天</option>
+            <option value="long">長借</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn-borrow" onclick="submitBorrowForm()">確定借用</button>
+        <button class="btn-red" onclick="loadLastBorrowRecord()">連續借用</button>
+        <button class="btn-clear" onclick="resetBorrowForm()">清除</button>
+        <button class="btn-cancel" onclick="cancelForm('borrow')">離開</button>
+      </div>
+      <p id="borrow-result"></p>
+    </div>
+
+    <!-- ===================== 歸還設備 ===================== -->
+    <div id="return" class="form-section">
+      <div class="form-header">
+        <h2>歸還設備</h2>
+      </div>
+
+      <div class="form-group">
+        <label for="return-barcode">設備條碼</label>
+        <div class="field-wrapper">
+          <input type="text" id="return-barcode" inputmode="numeric" placeholder="請輸入設備條碼">
+          <button class="btn-scan-small" onclick="toggleScanner('return')">手機掃描用</button>
+        </div>
+      </div>
+
+      <div id="scanner-container-return" style="display:none; margin-top:10px;"></div>
+
+      <div class="button-group">
+        <button class="btn-return" onclick="submitReturnForm()">確定歸還</button>
+        <button class="btn-cancel" onclick="cancelForm('return')">離開</button>
+      </div>
+      <p id="return-result"></p>
+    </div>
+      
+    <!-- ===================== 新增教師 ===================== -->
+    <div id="new" class="form-section">
+      <div class="form-header">
+        <h2>新增教師</h2>
+      </div>
+
+      <div class="form-group">
+        <label for="new-teacher-name">教師姓名</label>
+        <div class="field-wrapper">
+          <input type="text" id="new-teacher-name" placeholder="請輸入教師姓名">
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn-new" onclick="submitNewTeacherForm()">確定新增</button> 
+        <button class="btn-cancel" onclick="cancelForm('new')">離開</button>
+      </div>
+      <p id="new-result"></p>
+    </div>
+
+    <!-- ===================== 查詢設備 ===================== -->
+    <div id="query" class="form-section">
+      <div class="form-header">
+        <h2>查詢設備</h2>
+      </div>
+
+      <div class="form-group">
+        <label for="query-class">班級</label>
+        <div class="field-wrapper">
+          <input type="text" id="query-class" placeholder="請輸入班級">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="query-seat">座號</label>
+        <div class="field-wrapper">
+          <input type="text" id="query-seat" placeholder="請輸入座號">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="query-name">姓名</label>
+        <div class="field-wrapper">
+          <input type="text" id="query-name" placeholder="請輸入姓名關鍵字">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="query-barcode">設備條碼</label>
+        <div class="field-wrapper">
+          <input type="text" id="query-barcode" inputmode="numeric" placeholder="請輸入條碼:更新狀態">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="query-equipment">設備名稱</label> 
+        <div class="field-wrapper">
+          <input type="text" id="query-equipment" placeholder="請輸入設備關鍵字">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="query-status">歸還情形</label>
+        <div class="field-wrapper">
+          <select id="query-status">
+            <option value=""></option> 
+            <option value="未歸還">未歸還</option>
+            <option value="已歸還">已歸還</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button id="query-button" class="btn-query btn-green" onclick="submitQueryForm()">查詢</button>
+        <button id="repair-button" class="btn-repair" onclick="submitRepairForm()">更新狀態</button>
+        <button id="clear-button" class="btn-clear btn-pink" onclick="resetQueryForm()">清除</button>
+        <button class="btn-cancel" onclick="cancelForm('query')">離開</button>
+        <button id="identity-toggle-button" class="btn-identity-toggle" onclick="toggleIdentitySelection()">身分</button>
+      </div>
+
+      <p id="repair-result"></p>
+
+      <div id="repair-options" style="display: none; margin-top: 30px; text-align: center;">
+        <div style="display: block; margin: auto; background-color: #fffde7; border: 2px solid #fbc02d; border-radius: 16px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); padding: 30px 40px; max-width: 520px;">
+          <form style="display: flex; flex-direction: column; align-items: center; gap: 25px;">
+            <select id="repair-status-select" style="font-size: 28px; padding: 10px 20px; border-radius: 10px; width: 100%; max-width: 360px; border: 2px solid #ccc;">
+              <option value="">請選擇設備狀態</option>
+              <option value="REPAIR">報修（維修中）</option>
+              <option value="ENABLE">啟用（可借用）</option>
+              <option value="UNASSIGNED">未編（未編設備）</option>
+            </select>
+
+            <div style="display: flex; gap: 30px;">
+              <button type="button" onclick="submitRepairStatusChange()" style="font-size: 28px; padding: 10px 24px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; min-width: 120px;">✅ 確定</button>
+              <button type="button" onclick="cancelRepairStatusChange()" style="font-size: 28px; padding: 10px 24px; background-color: #B0BEC5; color: black; border: none; border-radius: 8px; min-width: 120px;">❌ 取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <p id="query-result" style="font-size: 30px; color: red; font-weight: bold;"></p>
+      <div id="query-table-container"></div> 
+    </div>
+
+    <!-- ===================== 進階設定 ===================== -->
+    <div id="settings" class="form-section">
+      <div class="form-header">
+        <h2>進階設定</h2>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px;">
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbyC4Cd47_wv7-mVSgOLjKBa_kBrVw7R-ql49bZWNnvMGcZbQFCXuejeV7DQwnvsdyJV/exec')" style="width: 220px;background-color:#FF6B6B; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">冷氣儲值HTML</button>
+        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/1_MfJZramhgQVdjWRqOjCWNKBW14P9yw4l9GFknl_iS8/edit?gid=1451666756')" style="width: 220px;background-color:#4DD0E1; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備借用 EXCEL</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbyReP2_g_Da25Qh2Bxa44b-awe3rpJWu258e7cko-is1yFdOFJ2YyUIeomOmVxocSbX/exec')" style="width: 220px;background-color:#81C784; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備設定HTML</button>
+        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/16Btq6gd5j8ugpqFwRtQ-lpAgg9_Exn80UUrkhc4OYQE/edit?gid=578985482#gid=578985482')" style="width: 220px;background-color:#FFD54F; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">粉筆板擦 EXCEL</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbwlC6kNYqplljKaQe6q9aamukFhLaVr2x-HTa3IOwINunxjK0RnDZ2bJHOwq-NeXQPJYA/exec')" style="width: 220px;background-color:#BA68C8; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">期末歸還 HTML</button>
+        <button onclick="openInNewTab('https://docs.google.com/spreadsheets/d/1PQg7L9igcyy584fekpseDQZ75KnXwsby0FaEyQaiX5o/edit?gid=0#gid=0')" style="width: 220px;background-color:#F06292; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備維修 EXCEL</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbwJJ2_4S8SjcgydQxMqiHBwACNFFVblbXsFQ7Fq84bD6st8BjnBIDZHiJowBrN2MIB9/exec')" style="width: 220px;background-color:#64B5F6; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備維修 HTML</button>
+        <button onclick="openInNewTab('https://script.google.com/a/macros/fjm.kh.edu.tw/s/AKfycbxBnPl_7XPedBwlk4pL3jYHwXteRd2SNegY24QLp6jGVvxCQDgRTXTu1XhF2rcaGh_mIw/exec')" style="width: 220px;background-color:#FF8A65; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">設備盤點</button>
+        <button onclick="openInNewTab('')" style="width: 220px;background-color:#A1887F; color:white; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 9</button>
+        <button onclick="openInNewTab('')" style="width: 220px;background-color:#90CAF9; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 10</button>
+        <button onclick="openInNewTab('')" style="width: 220px;background-color:#AED581; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 11</button>
+        <button onclick="openInNewTab('')" style="width: 220px;background-color:#CE93D8; color:black; font-size:22px; padding:14px 20px; border:none; border-radius:10px;">預留按鈕 12</button>
+      </div>
+
+      <div class="button-group" style="display: flex; justify-content: center; margin-top: 30px;">
+        <button class="btn-settings-cancel" onclick="cancelForm('settings')">離開</button>
+      </div>
+      <p id="settings-result"></p>
+    </div>
+
+  </div> <!-- ✅ 這裡正確閉合了 .container 標籤！ -->
+
+  <!-- ===================== 浮動對話框區 ===================== -->
+  <div id="password-dialog" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); text-align:center; z-index:9999;">
+    <p style="font-size:24px; font-weight:bold;">請輸入密碼</p>
+    <input id="password-input" type="password" style="font-size:24px; padding:10px; width:80%; border:1px solid #ccc; border-radius:5px;"><br><br>
+    <button onclick="verifyPassword()" style="font-size:20px; padding:8px 16px; background-color:#4CAF50; color:white; border:none; border-radius:5px;">確認</button>
+    <button onclick="closePasswordDialog()" style="font-size:20px; padding:8px 16px; margin-left:10px; background-color:#ccc; color:black; border:none; border-radius:5px;">取消</button>
+    <p id="password-error" style="color:red; font-size:18px; display:none; margin-top:10px;">密碼錯誤，請重試！</p>
+  </div>
+
+  <div id="delete-confirm-dialog" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#fff; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.15); padding:32px 24px; z-index:9999; text-align:center;">
+    <div style="font-size:28px; color:#d32f2f; margin-bottom:16px;">⚠️ 確定要刪除此設備紀錄嗎？</div>
+    <button id="delete-confirm-btn" style="font-size:22px; background:#ff4081; color:#fff; border:none; border-radius:6px; padding:8px 32px; margin:0 12px;">確定</button>
+    <button id="delete-cancel-btn" style="font-size:22px; background:#ccc; color:#333; border:none; border-radius:6px; padding:8px 32px; margin:0 12px;">取消</button>
+  </div>
+
+<script>
+// ==========================================
+// 🚀 API 連線設定
+// ==========================================
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyRjMxPiPPPk3uGmVbSe2n7lwIsq3o0KfhU9LwS1Jz2KE8qF9rjpDzMiFmaUxoYuH1J/exec";
+
+// 共用 API 呼叫函式
+function callGasApi(action, params = {}) {
+  return fetch(GAS_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify({ action: action, ...params })
+  }).then(res => res.json());
+}
+
+
+let fullNameList = [];
+let currentList = [];
+let borrowNameInput = null;
+
+document.addEventListener("DOMContentLoaded", function() {
+  loadBorrowUnits();
+  loadNameList();
+
+  document.getElementById("borrow-identity").addEventListener("change", loadNameList);
+
+  borrowNameInput = document.getElementById("borrow-name");
+  if (borrowNameInput) {
+    borrowNameInput.addEventListener("input", filterNameList);
+
+    borrowNameInput._awesomplete = new Awesomplete(borrowNameInput, {
+      minChars: 0,
+      maxItems: 30,
+      autoFirst: true,
+      list: [],
+      sort: false,
+    });
+
+    borrowNameInput.addEventListener("awesomplete-open", function() {
+      const ul = document.querySelector(".awesomplete ul") || document.querySelector(".awesomplete__list");
+      if (ul) {
+        ul.style.minWidth = "180px";
+        ul.style.maxWidth = "240px";
+        ul.style.width = "220px";
+        ul.style.maxHeight = "400px";
+        ul.style.overflowY = "auto";
+        ul.style.fontSize = "24px";
+      }
+    });
+
+    borrowNameInput.addEventListener("focus", function() {
+      let current = borrowNameInput.value.trim().toLowerCase();
+      currentList = current === "" ? fullNameList : fullNameList.filter(name => name.toLowerCase().includes(current));
+      updateNameList(currentList);
+      borrowNameInput._awesomplete.evaluate();
+    });
+
+    borrowNameInput.addEventListener("awesomplete-selectcomplete", function(e) {
+      borrowNameInput.value = e.text.value;
+    });
+  }
+});
+
+function loadNameList() {
+  let identity = document.getElementById("borrow-identity").value;
+  callGasApi("getNameList", { identity }).then(function(names) {
+    fullNameList = names || [];
+    currentList = fullNameList;
+    updateNameList(fullNameList);
+  }).catch(e => console.error("Error loading name list:", e));
+}
+
+function filterNameList() {
+  let input = borrowNameInput.value.trim().toLowerCase();
+  currentList = input === "" ? fullNameList : fullNameList.filter(name => name.toLowerCase().includes(input));
+  updateNameList(currentList);
+}
+
+function updateNameList(names) {
+  if (borrowNameInput && borrowNameInput._awesomplete) {
+    borrowNameInput._awesomplete.list = names.slice(0, 30);
+  }
+}
+
+function searchStudentByName(name) {
+  callGasApi("getStudentInfoByName", { name }).then(function (data) {
+    if (data.length === 0) {
+      alert("查無此學生");
+    } else if (data.length === 1) {
+      fillStudentData(data[0]);
+    } else {
+      showStudentSelectionDialog(data);
+    }
+  }).catch(e => console.error(e));
+}
+
+function showStudentSelectionDialog(students, callback) {
+  let dialogHtml = "<div id='studentDialogBox' style='text-align:left; font-size:18px;'>";
+  dialogHtml += "<p><strong>請選擇正確的學生：</strong></p>";
+
+  students.forEach((student, index) => {
+    let studentData = JSON.stringify(student).replace(/"/g, '&quot;');
+    dialogHtml += `
+      <input type="radio" name="studentSelection" id="student${index}" value='${studentData}'>
+      <label for="student${index}">${student.class}班 ${student.seat}號 ${student.name}</label><br>
+    `;
+  });
+
+  dialogHtml += `
+    <br>
+    <button onclick="selectStudent()" 
+      style="padding: 10px 16px; font-size:16px; background-color: #32CD32; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+      確定
+    </button>
+  </div>`;
+
+  let dialog = document.createElement("div");
+  dialog.id = "studentDialog";
+  dialog.style.position = "fixed";
+  dialog.style.top = "50%";
+  dialog.style.left = "50%";
+  dialog.style.transform = "translate(-50%, -50%)";
+  dialog.style.backgroundColor = "white";
+  dialog.style.padding = "20px";
+  dialog.style.border = "2px solid #ccc";
+  dialog.style.boxShadow = "0px 0px 10px rgba(0,0,0,0.5)";
+  dialog.innerHTML = dialogHtml;
+
+  document.body.appendChild(dialog);
+
+  if(callback) window.studentSelectionCallback = callback;
+}
+
+function fillStudentData(student) {
+  document.getElementById("borrow-name").value = student.name;
+}
+
+function loadBorrowUnits() {
+  callGasApi("getBorrowUnits").then(function(units) {
+    let select = document.getElementById("borrow-unit");
+    select.innerHTML = '<option value="">請選擇單位</option>'; 
+    units.forEach(function(unit) {
+      let option = document.createElement("option");
+      option.value = unit;
+      option.textContent = unit;
+      select.appendChild(option);
+    });
+  }).catch(e => console.error(e));
+}
+
+function clearInputAfterMessage(inputElem, timeoutMs = 3000, focusBack = true) {
+  if (!inputElem) return;
+  setTimeout(() => {
+    inputElem.value = "";
+    if (focusBack) {
+      inputElem.focus();
+      inputElem.select();
+    }
+  }, timeoutMs + 50);
+}
+
+
+function submitBorrowForm() {
+  let identity = document.getElementById("borrow-identity").value;
+  let name = document.getElementById("borrow-name").value.trim();
+  let barcode = document.getElementById("borrow-barcode").value.trim();
+  let unit = document.getElementById("borrow-unit").value;
+  let days = document.getElementById("borrow-days").value;
+
+  if (!name || !barcode || !unit || !days) {
+    showFloatingMessage("請填寫完整資料", "error", 2500);
+    return;
+  }
+
+  if (/^[A-Za-z]/.test(barcode)) {
+    const barcodeInput = document.getElementById("borrow-barcode");
+    showFloatingMessage("條碼異常，請改鍵盤輸入", "warn", 3000);
+    clearInputAfterMessage(barcodeInput, 3000, true);
+    return;
+  }
+
+  showProgressBar("borrow", "📡 借用處理中...", function () {
+    callGasApi("borrowEquipment", { identity, name, barcode, unit, days })
+      .then(function (response) {
+        let timeout = 2200;
+        let type = "error";
+        let msg = "";
+
+        if (typeof response === "object" && response.message) {
+          msg = response.message;
+          if (response.status === "success") {
+            type = "success";
+            timeout = 1500;
+            resetBorrowForm();
+          } else if (response.status === "error") {
+            type = "error";
+            timeout = 3000;
+          }
+          showFloatingMessage(msg, type, timeout);
+        } else {
+          msg = response;
+          let isSuccess = typeof response === "string" && response.includes("✅");
+          type = isSuccess ? "success" : "error";
+          timeout = isSuccess ? 1500 : 3000;
+          showFloatingMessage(msg, type, timeout);
+          if (isSuccess) resetBorrowForm();
+        }
+
+        const barElem = document.getElementById("borrow-progress-bar");
+        if (barElem) barElem.parentElement.parentElement.innerHTML = "";
+      }).catch(e => console.error(e));
+  });
+}
+
+let inactivityTimer = null;
+
+function startInactivityTimer(formId) {
+  clearTimeout(inactivityTimer); 
+  inactivityTimer = setTimeout(() => {
+    showIdleWarning(formId); 
+  }, 120000); 
+}
+
+function monitorUserActivity(formId) {
+  const formElem = document.getElementById(formId);
+  if (!formElem) return;
+
+  ["mousemove", "keypress", "click", "input", "touchstart"].forEach(event => {
+    formElem.addEventListener(event, () => startInactivityTimer(formId));
+  });
+  startInactivityTimer(formId);
+}
+
+function showIdleWarning(formId) {
+  const activeSection = document.querySelector(".form-section.active");
+  if (!activeSection) {
+    return;
+  }
+
+  const msg = document.createElement("div");
+  msg.innerText = "⚠️ 15 秒後將返回主畫面";
+  msg.style.position = "fixed";
+  msg.style.top = "50%";
+  msg.style.left = "50%";
+  msg.style.transform = "translate(-50%, -50%)";
+  msg.style.backgroundColor = "#f44336";
+  msg.style.color = "white";
+  msg.style.padding = "20px 40px";
+  msg.style.fontSize = "32px";
+  msg.style.fontWeight = "bold";
+  msg.style.borderRadius = "12px";
+  msg.style.zIndex = 9999;
+  msg.style.opacity = 1;
+  msg.style.transition = "opacity 1s ease-out";
+
+  document.body.appendChild(msg);
+
+  setTimeout(() => {
+    msg.style.opacity = 0;
+    setTimeout(() => msg.remove(), 1000);
+  }, 3000);
+
+  setTimeout(() => {
+    cancelForm(formId);
+  }, 15000);
+}
+
+function resetBorrowForm() {
+  document.getElementById("borrow-identity").value = "教師"; 
+  document.getElementById("borrow-name").value = ""; 
+  document.getElementById("borrow-barcode").value = ""; 
+  document.getElementById("borrow-unit").value = ""; 
+  document.getElementById("borrow-days").value = "1"; 
+
+  loadNameList();
+  if (borrowNameInput && borrowNameInput._awesomplete) {
+    borrowNameInput._awesomplete.list = [];
+  }
+}
+
+function getStudentInfo(name, callback) {
+  callGasApi("getStudentInfoByName", { name }).then(function(data) {
+    if (data.length === 0) {
+      callback(null); 
+    } else if (data.length === 1) {
+      callback(data[0]); 
+    } else {
+      showStudentSelectionDialog(data, callback);
+    }
+  });
+}
+
+function selectStudent() {
+  let selectedStudent = document.querySelector('input[name="studentSelection"]:checked');
+  if (selectedStudent) {
+    let studentData = JSON.parse(selectedStudent.value);
+    document.getElementById("borrow-name").value = studentData.name;
+    window.selectedStudentInfo = {
+      class: studentData.class || "",
+      seat: studentData.seat || "",
+      studentID: studentData.studentID || ""
+    };
+
+    let dialog = document.getElementById("studentDialog");
+    if (dialog) dialog.remove();
+  } else {
+    showFloatingMessage("請選擇一位學生！", "warn", 3000);
+  }
+}
+
+function convertDays(days) {
+  const dayMapping = { "1": 1, "2": 2, "3": 3, "7": 7, "30": 30, "long": 4000 };
+  return dayMapping[days] || 0;
+}
+
+function loadLastBorrowRecord() {
+  showProgressBar("borrow", "📡 取得上次借用紀錄...", function () {
+    callGasApi("getLastBorrowRecord").then(function(record) {
+      const barElem = document.getElementById("borrow-progress-bar");
+      if (barElem) barElem.parentElement.parentElement.innerHTML = "";
+
+      if (!record || !record.name) {
+       showFloatingMessage("❌ 找不到最近的借用記錄！", "error", 3000);
+        return;
+      }
+
+      document.getElementById("borrow-name").value = record.name;
+      document.getElementById("borrow-unit").value = record.unit;
+
+      let identitySelect = document.getElementById("borrow-identity");
+      identitySelect.value = (record.className === "949") ? "教師" : "學生";
+
+      let dayMapping = {
+        "1": "1天", "2": "2天", "3": "3天", "7": "7天", "30": "30天", "4000": "長借"
+      };
+      let daysSelect = document.getElementById("borrow-days");
+      let borrowDaysText = dayMapping[record.days] || "1天";
+      let found = false;
+      for (let option of daysSelect.options) {
+        if (option.textContent.trim() === borrowDaysText) {
+          daysSelect.value = option.value;
+          found = true;
+          break;
+        }
+      }
+      if (!found) daysSelect.value = "1天";
+
+      showFloatingMessage("已匯入，請輸入設備條碼！", "info", 1000);
+
+      const barcodeInput = document.getElementById("borrow-barcode");
+      barcodeInput.value = "";
+      barcodeInput.focus();
+      barcodeInput.select();
+    });
+  });
+}
+
+function showForm(formId, fromPassword = false) {
+  Object.keys(scanners).forEach(key => {
+    if (scanners[key]) {
+      scanners[key].stop().then(() => {
+        scanners[key] = null;
+        const container = document.getElementById(`scanner-container-${key}`);
+        if (container) container.style.display = 'none';
+      }).catch(err => console.error('掃描器關閉失敗:', err));
+    }
+  });
+
+  document.getElementById("password-dialog").style.display = "none";
+
+  if (["new", "query", "settings"].includes(formId) && !fromPassword) {
+    openPasswordDialog(formId);
+    return;
+  }
+
+  window.passwordVerified = false;
+
+  document.querySelectorAll('.form-section').forEach(section => {
+    section.classList.remove('active');
+    let messageElem = section.querySelector('p');
+    if (messageElem) messageElem.innerText = '';
+  });
+
+  if (formId === "borrow") {
+    resetBorrowForm();
+    setTimeout(() => { document.getElementById("borrow-name")?.focus(); }, 200);
+  } else if (formId === "return") {
+    resetReturnForm();
+    setTimeout(() => { document.getElementById("return-barcode")?.focus(); }, 200);
+  } else if (formId === "new") {
+    resetNewForm();
+    setTimeout(() => { document.getElementById("new-teacher-name")?.focus(); }, 200);
+  } else if (formId === "query") {
+    resetQueryForm();
+    setTimeout(() => { document.getElementById("query-name")?.focus(); }, 200);
+  }
+
+  monitorUserActivity(formId);
+
+  const target = document.getElementById(formId);
+  if (target) {
+    target.classList.add("active");
+  }
+}
+
+function cancelForm(formId) {
+  document.getElementById(formId).classList.remove('active');
+
+  let inputs = document.querySelectorAll(`#${formId} input, #${formId} select`);
+  inputs.forEach(input => {
+    input.value = "";
+  });
+
+  if (formId === "borrow") {
+    document.getElementById("borrow-identity").value = "教師"; 
+    document.getElementById("borrow-days").value = "1"; 
+    if (borrowNameInput && borrowNameInput._awesomplete) {
+      borrowNameInput._awesomplete.list = [];
+    }
+  }
+
+  let resultElem = document.getElementById(`${formId}-result`);
+  if (resultElem) {
+    resultElem.innerText = "";
+  }
+}
+
+function openChalkRegistration() {
+   document.getElementById("password-dialog").style.display = "none";
+      var newWindow = window.open("https://mikania0000.github.io/FJM-CHALK/", "_blank");
+      setTimeout(function() {
+        if(newWindow && !newWindow.closed) {
+          newWindow.close();
+        }
+      }, 120000);
+    }
+
+function openAdvancedSettings() {
+  document.getElementById("password-dialog").style.display = "none";
+  showForm("settings"); 
+}
+
+function submitReturnForm() {
+  var barcodeInput = document.getElementById("return-barcode");
+  var resultElem = document.getElementById("return-result");
+
+  if (!barcodeInput) return;
+  if (!resultElem) {
+    resultElem = document.createElement("p");
+    resultElem.id = "return-result";
+    document.getElementById("return").appendChild(resultElem);
+  }
+
+  var barcode = barcodeInput.value.trim();
+
+  if (!barcode) {
+    showFloatingMessage("請輸入條碼!", "warn", 3000);
+    return;
+  }
+
+  if (/^[A-Za-z]/.test(barcode)) {
+    showFloatingMessage("條碼異常，請改鍵盤輸入", "warn", 3000);
+    clearInputAfterMessage(barcodeInput, 3000, true);
+    return;
+  }
+
+  showProgressBar("return", "📡 歸還處理中...", function () {
+    callGasApi("returnEquipment", { barcode }).then(function (response) {
+      if (typeof response === "object" && response.message) {
+        let isSuccess = response.status === "success";
+        barcodeInput.value = "";
+        let timeout = isSuccess ? 4000 : 3000;
+        showFloatingMessage(response.message, isSuccess ? "success" : "error", timeout);
+        resultElem.innerText = ""; 
+      } else {
+        let isSuccess = typeof response === "string" && response.includes("✅");
+        barcodeInput.value = "";
+        showFloatingMessage(response, isSuccess ? "success" : "error", 3000);
+        if (isSuccess) resultElem.innerText = "";
+      }
+    });
+  });
+}
+
+function resetReturnForm() {
+  document.getElementById("return-barcode").value = "";
+}
+
+function resetNewForm() {
+  var newForm = document.getElementById("new");
+  if (newForm) {
+    document.getElementById("new-teacher-name").value = ""; 
+  }
+}
+
+function submitNewTeacherForm() {
+  var name = document.getElementById("new-teacher-name").value.trim();
+
+  if (!name) {
+    showFloatingMessage("請輸入教師姓名！", "warn", 3000);
+    return;
+  }
+
+  showProgressBar("new", "📡 新增教師中...", function () {
+    callGasApi("addNewTeacher", { name }).then(function(response) {
+      let type = (response.status === "success") ? "success" : "error";
+      showFloatingMessage(response.message, type, 3000);
+      if (response.status === "success") {
+        document.getElementById("new-teacher-name").value = "";
+      }
+    });
+  });
+}
+
+
+function submitQueryForm() {
+  document.getElementById("query-result").innerText = "";
+  document.getElementById("query-table-container").innerHTML = "";
+  document.getElementById("repair-options").style.display = "none";
+  document.getElementById("repair-status-select").value = "";
+  document.getElementById("repair-result").innerHTML = "";
+
+  const className = document.getElementById("query-class").value.trim();
+  const seat = document.getElementById("query-seat").value.trim().replace(/^0+/, '');
+  const name = document.getElementById("query-name").value.trim();
+  const barcode = document.getElementById("query-barcode").value.trim().replace(/^0+/, '');
+  const equipment = document.getElementById("query-equipment").value.trim();
+  const status = document.getElementById("query-status").value;
+
+  const resultElem = document.getElementById("query-result");
+  const tableContainer = document.getElementById("query-table-container");
+
+  if (!className && !seat && !name && !barcode && !equipment && !status) {
+    showFloatingMessage("請輸入查詢條件!", "warn", 2500);
+    return; 
+  }
+
+  showProgressBar("query", "📡 查詢中...", function () {
+    callGasApi("queryEquipmentData", { className, seat, name, barcode, equipment, status }).then(function (response) {
+      if (typeof response === "object" && response.status) {
+        let type = response.status === "warn" ? "warn"
+                 : response.status === "success" ? "success"
+                 : response.status === "info" ? "info"
+                 : "error";
+        showFloatingMessage(response.message, type, 2500);
+        tableContainer.innerHTML = "";
+        return;
+      }
+
+      let table = `
+        <table class="query-table">
+          <thead>
+            <tr>
+              <th>班級</th><th>座號</th><th>姓名</th><th>設備條碼</th>
+              <th>設備名稱</th><th>借用單位</th><th>借用時間</th>
+              <th>歸還時間</th><th>歸還情形</th><th>借用天數</th><th>處理</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      response.forEach(row => {
+        const recordUUID = row[10];
+        const borrowDaysRaw = String(row[9]).trim();
+        const unit = row[5];
+
+        table += `
+          <tr id="row-${recordUUID}">
+            <td style="text-align:center; vertical-align:middle;">${row[0]}</td>
+            <td style="text-align:center; vertical-align:middle;">${row[1]}</td>
+            <td style="text-align:center; vertical-align:middle;">${row[2]}</td>
+            <td style="text-align:center; vertical-align:middle;">${row[3]}</td>
+            <td style="text-align:center; vertical-align:middle;">${row[4]}</td>
+            <td id="unit-cell-${recordUUID}" style="text-align:center; vertical-align:middle;">${unit}</td>
+            <td style="text-align:center; vertical-align:middle;">${row[6]}</td>
+            <td style="text-align:center; vertical-align:middle;">${row[7]}</td>
+            <td style="text-align:center; vertical-align:middle;">${row[8]}</td>
+            <td id="days-cell-${recordUUID}" style="text-align:center; vertical-align:middle;">${row[9]}</td>
+            <td style="text-align:center; vertical-align:middle;">
+              <div class="btn-container">
+                <button id="modify-btn-${recordUUID}" class="btn-modify" 
+                  onclick="enableEditMode('${recordUUID}', '${borrowDaysRaw}')">修改</button>
+                <button class="btn-delete" onclick="deleteRecord('${recordUUID}')">刪除</button>
+                <button class="btn-cancel-edit" onclick="cancelEditMode('${recordUUID}', '${unit}', '${borrowDaysRaw}')">取消</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      table += "</tbody></table>";
+      tableContainer.innerHTML = table;
+      resultElem.innerText = "";
+
+      applyTableFormatting();
+    });
+  });
+}
+
+function enableEditMode(uuid, currentDays) {
+  var cellDays = document.getElementById(`days-cell-${uuid}`);
+  var cellUnit = document.getElementById(`unit-cell-${uuid}`);
+  var modifyBtn = document.getElementById(`modify-btn-${uuid}`);
+
+  if (!cellDays || !cellUnit || !modifyBtn) return;
+
+  modifyBtn.innerText = "確定";
+  modifyBtn.classList.remove("btn-modify");
+  modifyBtn.classList.add("btn-save-edit");
+  modifyBtn.onclick = function () { saveEdit(uuid); };
+
+  cellDays.innerHTML = `
+    <select id="edit-days-${uuid}" class="edit-days-dropdown" style="font-size: 18px; padding: 5px 8px;">
+      <option value="1" ${currentDays.includes("1") ? "selected" : ""}>1天</option>
+      <option value="2" ${currentDays.includes("2") ? "selected" : ""}>2天</option>
+      <option value="3" ${currentDays.includes("3") ? "selected" : ""}>3天</option>
+      <option value="7" ${currentDays.includes("7") ? "selected" : ""}>7天</option>
+      <option value="30" ${currentDays.includes("30") ? "selected" : ""}>30天</option>
+      <option value="4000" ${currentDays.includes("長借") ? "selected" : ""}>長借</option>
+    </select>
+  `;
+
+  const currentUnit = cellUnit.innerText.trim();
+  cellUnit.innerHTML = `<input id="edit-unit-${uuid}" value="${currentUnit}" style="width: 100px; font-size: 16px;">`;
+}
+
+function saveEdit(uuid) {
+  var selectElem = document.getElementById(`edit-days-${uuid}`);
+  var inputUnitElem = document.getElementById(`edit-unit-${uuid}`);
+  var cellDays = document.getElementById(`days-cell-${uuid}`);
+  var cellUnit = document.getElementById(`unit-cell-${uuid}`);
+  var modifyBtn = document.getElementById(`modify-btn-${uuid}`);
+
+  if (!selectElem || !inputUnitElem) {
+    showFloatingMessage("❌ 選擇或輸入的值無效！", "error",2000);
+    return;
+  }
+
+  const newDays = selectElem.value;
+  const newUnit = inputUnitElem.value.trim();
+
+  if (!newUnit) {
+    showFloatingMessage("請輸入借用單位！", "warn", 2500);
+    return;
+  }
+
+  showFloatingMessage("🛠️ 修改中請稍後...", "info");
+
+  cellDays.innerText = newDays === "4000" ? "長借" : `${newDays}天`;
+  cellUnit.innerText = newUnit;
+
+  modifyBtn.innerText = "修改";
+  modifyBtn.classList.remove("btn-save-edit");
+  modifyBtn.classList.add("btn-modify");
+  modifyBtn.onclick = function () { enableEditMode(uuid, newDays); };
+
+  callGasApi("updateBorrowDaysAndUnit", { uuid, newDays, newUnit }).then(function (response) {
+    let type = (response.status === "success") ? "success" : "error";
+    showFloatingMessage(response.message, type);
+  });
+}
+
+function showFloatingMessage(message, type = "info", timeoutMs = null) {
+  let existMsg = document.getElementById('floating-msg');
+  if (existMsg) existMsg.remove();
+
+  let emoji = "", bgColor = "", color = "#fff", fontSize = "26px", timeout = 3000;
+
+  if (type === "success") {
+    emoji = "✅"; bgColor = "#1e7c33"; timeout = 2000;
+  } else if (type === "error") {
+    emoji = "❌"; bgColor = "#d32f2f"; timeout = 3000; 
+  } else if (type === "warn") {
+    emoji = "⚠️"; bgColor = "#BF360C"; color = "#fff"; timeout = 3000; 
+  } else if (type === "info") {
+    emoji = "ℹ️"; bgColor = "#1565c0"; timeout = 3000; 
+  } else {
+    emoji = ""; bgColor = "#333"; timeout = 2000;
+  }
+
+  if (typeof timeoutMs === "number") timeout = timeoutMs;
+
+  let text = message.trim();
+  if (emoji && text.startsWith(emoji)) text = text.replace(emoji, '').trim();
+
+  const msg = document.createElement("div");
+  msg.id = "floating-msg";
+  msg.innerText = (emoji ? emoji + " " : "") + text;
+  msg.style.position = "fixed";
+  msg.style.top = "50%";
+  msg.style.left = "50%";
+  msg.style.transform = "translate(-50%, -50%)";
+  msg.style.backgroundColor = bgColor;
+  msg.style.color = color;
+  msg.style.padding = "20px 20px";
+  msg.style.fontSize = fontSize;
+  msg.style.fontWeight = "bold";
+  msg.style.borderRadius = "12px";
+  msg.style.zIndex = 9999;
+  msg.style.opacity = 1;
+  msg.style.transition = "opacity 1s ease-out";
+  msg.style.maxWidth = "90vw";
+  msg.style.wordBreak = "break-all";
+  msg.style.whiteSpace = "pre-line";
+  msg.style.boxSizing = "border-box";
+
+  document.body.appendChild(msg);
+
+  setTimeout(() => {
+    msg.style.opacity = 0;
+    setTimeout(() => msg.remove(), 1000);
+  }, timeout);
+}
+
+let pendingDeleteUUID = null;
+
+function deleteRecord(uuid) {
+  pendingDeleteUUID = uuid;
+  document.getElementById('delete-confirm-dialog').style.display = "block";
+}
+
+document.getElementById('delete-confirm-btn').onclick = function() {
+  if (!pendingDeleteUUID) return;
+  document.getElementById('delete-confirm-dialog').style.display = "none";
+
+  showFloatingMessage("處理中，請稍後...", "info", 1200);
+
+  callGasApi("deleteEquipmentRecord", { uuid: pendingDeleteUUID })
+    .then(function(response) {
+      let type = (response.status === "success" || response.status === "warning") ? "success" : "error";
+      if (type === "success") {
+        const row = document.getElementById(`row-${pendingDeleteUUID}`);
+        if (row) row.remove();
+      }
+
+      let timeout = 2000; 
+      if (response.status === "success") {
+        timeout = 3000;      
+      } else if (response.status === "warning") {
+        timeout = 3000;      
+      } else if (response.status === "error") {
+        timeout = 3500;      
+      }
+
+      showFloatingMessage(response.message, type, timeout);
+      pendingDeleteUUID = null;
+    })
+    .catch(function(error) {
+      showFloatingMessage("❌ 刪除失敗：" + error.message, "error", 4000);
+      pendingDeleteUUID = null;
+    });
+};
+
+document.getElementById('delete-cancel-btn').onclick = function() {
+  document.getElementById('delete-confirm-dialog').style.display = "none";
+  pendingDeleteUUID = null;
+};
+
+function resetQueryForm() {
+  document.getElementById("query-class").value = "";
+  document.getElementById("query-seat").value = "";
+  document.getElementById("query-name").value = "";
+  document.getElementById("query-barcode").value = "";
+  document.getElementById("query-equipment").value = "";
+  document.getElementById("query-status").value = "";
+  document.getElementById("query-result").innerText = "";
+  document.getElementById("query-table-container").innerHTML = ""; 
+  document.getElementById("repair-options").style.display = "none";
+}
+
+function submitRepairForm() {
+  document.getElementById("query-result").innerText = "";
+  document.getElementById("query-table-container").innerHTML = "";
+  document.getElementById("repair-options").style.display = "none";
+  document.getElementById("repair-status-select").value = "";
+  document.getElementById("repair-result").innerHTML = "";
+
+  const barcode = document.getElementById("query-barcode").value.trim();
+  if (!barcode) {
+    showFloatingMessage("請先輸入設備條碼！", "warn");  
+    return;
+  }
+
+  showProgressBar("repair", "🔍 處理中，請稍候...", () => {
+    callGasApi("checkBarcodeStatus", { barcode }).then(function (response) {
+      if (response.status === "NOT_FOUND") {
+        showFloatingMessage("此設備條碼不存在！", "error");
+      } else if (response.status === "BORROWED") {
+        showFloatingMessage("此設備借用中，請先歸還！", "error");
+      } else if (response.status === "OK") {
+        document.getElementById("repair-options").style.display = "flex";
+        showCurrentDeviceStatus(response.currentStatus, response.equipmentName); 
+      }
+    });
+  });
+}
+
+function showCurrentDeviceStatus(currentStatus, equipmentName) {
+  const statusMap = {
+    0: "啟用（可借用）",
+    1: "借出中",
+    2: "報修（維修中）",
+    3: "未編",
+  };
+  const statusText = statusMap[currentStatus] || "未知狀態";
+  let container = document.getElementById("repair-options");
+  if (!container) return;
+  let exist = document.getElementById("current-status-info");
+  if (exist) exist.remove();
+
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.alignItems = "center";
+
+  let info = document.createElement("div");
+  info.id = "current-status-info";
+  info.style.fontSize = "28px";
+  info.style.color = "#1E3A8A";
+  info.style.marginBottom = "15px";
+  info.style.fontWeight = "bold";
+  info.style.textAlign = "center";
+  info.style.width = "100%";
+ info.innerHTML = `目前${equipmentName ? `【${equipmentName}】` : ""}：<span style="color:#d32f2f;">${statusText}</span>`;
+
+  container.prepend(info);
+}
+
+var isIdentityLocked = false; 
+
+function toggleIdentitySelection() {
+  var identitySelect = document.getElementById("borrow-identity");
+
+  if (!identitySelect) return;
+
+  if (identitySelect.disabled) {
+    identitySelect.disabled = false;
+    isIdentityLocked = false;
+    showFloatingMessage("借用身分可為教師或學生!", "success");
+  } else {
+    identitySelect.value = "教師";
+    identitySelect.disabled = true;
+    isIdentityLocked = true;
+    showFloatingMessage(" 已固定借用身分為教師!", "info");
+  }
+}
+
+let scanners = {};
+
+function toggleScanner(context) {
+  const containerId = `scanner-container-${context}`;
+  const inputId = context === 'borrow' ? 'borrow-barcode' : 'return-barcode';
+  const container = document.getElementById(containerId);
+
+  if (scanners[context]) {
+    scanners[context].stop().then(() => {
+      scanners[context] = null;
+      container.innerHTML = "";
+      container.style.display = 'none';
+    }).catch(err => console.error('關閉失敗', err));
+  } else {
+    container.innerHTML = "";
+    container.style.display = 'block';
+
+    const input = document.getElementById(inputId);
+    if (input) input.value = "";
+
+    scanners[context] = new Html5Qrcode(containerId);
+    scanners[context].start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: 200, disableFlip: true }, 
+      (decodedText) => {
+        document.getElementById(inputId).value = decodedText;
+
+        scanners[context].stop().then(() => {
+          scanners[context] = null;
+          container.innerHTML = "";
+          container.style.display = 'none';
+          if (context === 'return') submitReturnForm();
+        }).catch(err => console.error('掃描器關閉失敗:', err));
+      },
+      (errorMessage) => {}
+    ).catch(err => {
+      console.error('啟動掃描器失敗', err);
+      container.style.display = 'none';
+    });
+  }
+}
+
+let pendingFormId = null;
+window.passwordVerified = false;
+
+function openPasswordDialog(formId) {
+  document.querySelectorAll('.form-section').forEach(section => {
+    section.classList.remove('active');
+  });
+
+  pendingFormId = formId;
+  document.getElementById("password-dialog").style.display = "block";
+  document.getElementById("password-input").value = "";
+  document.getElementById("password-error").style.display = "none";
+  document.getElementById("password-input").focus();
+
+  const inputElem = document.getElementById("password-input");
+  inputElem.onkeydown = function(event) {
+    if (event.key === "Enter") {
+      event.preventDefault(); 
+      verifyPassword();      
+    }
+  };
+}
+
+function verifyPassword() {
+  const input = document.getElementById("password-input").value;
+  if (input === "000000") {
+    passwordVerified = true;
+    closePasswordDialog();
+
+    if (pendingFormId) {
+      const target = pendingFormId;
+      pendingFormId = null;
+      setTimeout(() => {
+        showForm(target, true);
+      }, 100); 
+    }
+  } else {
+    const errorElem = document.getElementById("password-error");
+    errorElem.style.display = "block";
+    setTimeout(function () {
+      errorElem.style.display = "none";
+    }, 2000);
+  }
+}
+
+function closePasswordDialog() {
+  document.getElementById("password-dialog").style.display = "none";
+}
+
+function cancelEditMode(uuid, originalUnit, originalDays) {
+  const cellDays = document.getElementById(`days-cell-${uuid}`);
+  const cellUnit = document.getElementById(`unit-cell-${uuid}`);
+  const modifyBtn = document.getElementById(`modify-btn-${uuid}`);
+
+  let daysValue = originalDays.replace("天", "");
+  let finalDaysText = daysValue === "4000" || originalDays === "長借" ? "長借" : `${daysValue}天`;
+
+  cellDays.innerText = finalDaysText;
+  cellUnit.innerText = originalUnit;
+
+  modifyBtn.innerText = "修改";
+  modifyBtn.classList.remove("btn-save-edit");
+  modifyBtn.classList.add("btn-modify");
+  modifyBtn.onclick = function () {
+    enableEditMode(uuid, daysValue);
+  };
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+["scanner-container-borrow", "scanner-container-return"].forEach(id => {
+  const container = document.getElementById(id);
+  if (container) {
+    container.style.width = "500px";
+    container.style.height = "650px";
+    container.style.margin = "auto";
+    container.style.border = "2px solid #999";
+    container.style.borderRadius = "10px";
+    container.style.marginBottom = "60px";  
+  }
+});
+
+  let identitySelect = document.getElementById("borrow-identity");
+  if (identitySelect) {
+    identitySelect.value = "教師";
+    identitySelect.disabled = true; 
+  }
+
+  let queryBtn = document.getElementById("query-button");
+  if (queryBtn) {
+    queryBtn.style.backgroundColor = "#32CD32"; 
+    queryBtn.style.color = "white";
+  }
+
+  let clearBtn = document.getElementById("clear-button");
+  if (clearBtn) {
+    clearBtn.style.backgroundColor = "#FF69B4"; 
+    clearBtn.style.color = "white";
+  }
+
+  let identityToggleBtn = document.getElementById("identity-toggle-button");
+  if (identityToggleBtn) {
+    identityToggleBtn.style.backgroundColor = "#5D0092"; 
+    identityToggleBtn.style.color = "white";
+    identityToggleBtn.style.fontSize = "28px";
+    identityToggleBtn.style.fontWeight = "bold";
+    identityToggleBtn.style.padding = "12px 24px";
+    identityToggleBtn.style.borderRadius = "8px";
+    identityToggleBtn.style.cursor = "pointer";
+    identityToggleBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.2)";
+  }
+
+  // 移除舊的 JS 寬度、間距動態控制（現在全部由 CSS .form-group 和 .field-wrapper 接管控制了）
+  let settingsButton = document.querySelector(".btn-settings");
+  if (settingsButton) {
+    settingsButton.style.backgroundColor = "#FF6347"; 
+    settingsButton.style.color = "white";
+    settingsButton.style.fontSize = "28px";
+    settingsButton.style.padding = "10px 22px";
+    settingsButton.style.borderRadius = "10px";
+    settingsButton.style.boxShadow = "3px 3px 6px rgba(0, 0, 0, 0.4)";
+  }
+
+});
+
+function applyTableFormatting() {
+  let table = document.querySelector(".query-table");
+  if (!table) return;
+
+  table.style.width = "100%";
+  table.style.borderCollapse = "collapse";
+
+  let headers = table.querySelectorAll("thead th");
+  headers.forEach(th => {
+    th.style.backgroundColor = "#1E3A8A";
+    th.style.color = "white";
+    th.style.fontSize = "19px";
+    th.style.textAlign = "center";
+    th.style.padding = "12px";
+    th.style.border = "1px solid white";
+  });
+
+  let cells = table.querySelectorAll("tbody td");
+  cells.forEach(td => {
+    td.style.backgroundColor = "#E3F2FD";
+    td.style.padding = "10px";
+    td.style.border = "1px solid #ccc";
+    td.style.textAlign = "center";
+    td.style.verticalAlign = "middle";
+    td.style.fontSize = "18px";
+  });
+
+  let colWidths = ["6%", "6%", "12%", "8%", "14%", "10%", "12%", "8%", "9%", "10%", "15%"];
+  let rows = table.querySelectorAll("tr");
+  rows.forEach(row => {
+    let cells = row.children;
+    for (let i = 0; i < cells.length; i++) {
+      if (colWidths[i]) cells[i].style.width = colWidths[i];
+    }
+  });
+
+let buttons = table.querySelectorAll(".btn-modify, .btn-delete, .btn-save-edit, .btn-cancel-edit");
+buttons.forEach(btn => {
+  btn.style.width = "100px";
+  btn.style.height = "40px";
+  btn.style.fontSize = "18px";
+  btn.style.border = "none";
+  btn.style.borderRadius = "10px";
+  btn.style.cursor = "pointer";
+  btn.style.margin = "5px";
+  btn.style.display = "inline-flex";
+  btn.style.justifyContent = "center";
+  btn.style.alignItems = "center";
+
+  if (btn.classList.contains("btn-modify")) {
+    btn.style.backgroundColor = "#FFD700"; 
+    btn.style.color = "black";
+  } else if (btn.classList.contains("btn-delete")) {
+    btn.style.backgroundColor = "#B22222"; 
+    btn.style.color = "white";
+  } else if (btn.classList.contains("btn-save-edit")) {
+    btn.style.backgroundColor = "#28a745"; 
+    btn.style.color = "white";
+  } else if (btn.classList.contains("btn-cancel-edit")) {
+    btn.style.backgroundColor = "#FF69B4"; 
+    btn.style.color = "white";
+  }
+});
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  applyTableFormatting();
+  let observer = new MutationObserver(applyTableFormatting);
+  observer.observe(document.getElementById("query-table-container"), { childList: true, subtree: true });
+});
+
+function submitRepairStatusChange() {
+  const barcode = document.getElementById("query-barcode").value.trim();
+  const actionType = document.getElementById("repair-status-select").value;
+
+  if (!barcode) {
+    showFloatingMessage("請輸入條碼！", "warn", 2500);
+    return;
+  }
+  if (!actionType) {
+    showFloatingMessage("請選擇設備狀態！", "warn", 2500);
+    return;
+  }
+
+  let finalAction = actionType;
+  if (actionType === "UNASSIGNED") {
+    finalAction = "SET_TO_3"; 
+  }
+
+  showFloatingMessage("處理中，請稍候...", "info");
+
+  callGasApi("processRepair", { barcode, actionType: finalAction }).then(function (response) {
+    document.getElementById("repair-options").style.display = "none";
+    document.getElementById("query-result").innerText = "";
+    document.getElementById("query-table-container").innerHTML = "";
+
+    if (typeof response === 'object' && response.status === "success") {
+      showFloatingMessage(`${response.equipmentName} 已更新為- ${response.newStatus}`, "success",3500);
+    } else if (typeof response === 'object') {
+      showFloatingMessage(response.message || "❌ 操作失敗", "error", 2000);
+    } else {
+      showFloatingMessage(response.includes("✅") ? response : "❌ " + response, response.includes("✅") ? "success" : "error", 2000);
+    }
+  });
+}
+
+function cancelRepairStatusChange() {
+  document.getElementById("repair-options").style.display = "none";
+  document.getElementById("query-result").innerText = "";
+  document.getElementById("query-table-container").innerHTML = "";
+  document.getElementById("repair-status-select").value = "";
+}
+
+function showProgressBar(formId, message, callback) {
+  const resultElem = document.getElementById(`${formId}-result`);
+  if (!resultElem) return;
+
+  resultElem.innerHTML = `
+    <div style="font-size: 28px; font-weight: bold; color: #d63384;">${message}</div>
+    <div style="width: 100%; background: #f8d7da; border-radius: 10px; margin-top: 10px;">
+      <div id="${formId}-progress-bar"
+           style="width: 0%; height: 28px; background: linear-gradient(to right, #FFB6C1, #FF69B4); border-radius: 10px;
+                  text-align: center; color: white; font-weight: bold; font-size: 20px;">
+      </div>
+    </div>
+  `;
+
+  let progress = 0;
+  let called = false;
+
+  const interval = setInterval(() => {
+    progress += Math.floor(Math.random() * 5 + 3);
+    if (progress > 100) progress = 100;
+
+    const bar = document.getElementById(`${formId}-progress-bar`);
+    if (bar) {
+      bar.style.width = `${progress}%`;
+      bar.innerText = `${progress}%`;
+    }
+
+    if (!called && progress >= 1) {
+      called = true;
+      if (callback) callback();  
+    }
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        const parent = bar?.parentElement?.parentElement;
+        if (parent) parent.innerHTML = "";
+      }, 300);
+    }
+  }, 100); 
+}
+
+function openInNewTab(url) {
+  if (!url) {
+    alert("⚠️ 尚未設定連結！");
+    return;
+  }
+  window.open(url, '_blank');
+}
+
+function monitorInputFormat(inputId, type, formId) {
+  const inputElem = document.getElementById(inputId);
+  if (!inputElem) return;
+
+  let lastWarningTime = 0;
+  let isComposing = false;
+  let firstInputTime = 0;
+
+  inputElem.addEventListener("compositionstart", () => { isComposing = true; });
+
+  inputElem.addEventListener("compositionend", () => {
+    isComposing = false;
+    if (type === "barcode") checkBarcode();
+    if (type === "name") checkName();
+  });
+
+  inputElem.addEventListener("input", () => {
+    const now = Date.now();
+    let val = inputElem.value;
+
+    if (val.length >= 4) {
+      if (firstInputTime === 0) firstInputTime = now;
+      const duration = now - firstInputTime;
+
+      if (duration < 300) {
+        val = val.replace(/^\*+|\*+$/g, "").replace(/\s+/g, "");
+        inputElem.value = val;
+        return; 
+      }
+    } else {
+      firstInputTime = 0; 
+    }
+  });
+
+  function checkBarcode() {
+    if (isComposing) return;
+    const now = Date.now();
+    let val = inputElem.value;
+    val = val.replace(/^\*+|\*+$/g, "");
+    inputElem.value = val;
+    if (val !== "" && /[^a-zA-Z0-9]/.test(val)) {
+      inputElem.value = "";
+      if (now - lastWarningTime > 1000) {
+        showFormMessage(formId, "⚠️ 請切換為 <英文> 輸入法", "red", 28, 3000);
+        lastWarningTime = now;
+      }
+    }
+  }
+
+  function checkName() {
+    if (isComposing) return;
+    const now = Date.now();
+    const val = inputElem.value;
+    if (val !== "" && /^[a-zA-Z0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(val) && val.length >= 3) {
+      inputElem.value = "";
+      if (now - lastWarningTime > 1000) {
+        showFormMessage(formId, "⚠️ 請切換為 <中文> 輸入法", "red", 28, 3000);
+        lastWarningTime = now;
+      }
+    }
+  }
+
+  if (type === "barcode") inputElem.addEventListener("input", checkBarcode);
+  if (type === "name") inputElem.addEventListener("input", checkName);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  monitorInputFormat("borrow-barcode", "barcode", "borrow");
+  monitorInputFormat("return-barcode", "barcode", "return"); 
+  monitorInputFormat("query-barcode", "barcode", "query");
+  monitorInputFormat("borrow-name", "name", "borrow");
+  monitorInputFormat("query-name", "name", "query");
+
+  const returnInput = document.getElementById("return-barcode");
+  let firstInputTime = 0;
+  let lastCharTime = 0;
+  let lastValue = "";
+  let isSubmitting = false;
+
+  if (returnInput) {
+    returnInput.addEventListener("input", () => {
+      const now = Date.now();
+      const val = returnInput.value.trim();
+
+      if (val.length === 1 || val !== lastValue) {
+        if (val.length === 1) firstInputTime = now;
+        lastCharTime = now;
+        lastValue = val;
+      }
+
+      const totalInputDuration = now - firstInputTime;
+      const lastCharGap = now - lastCharTime;
+
+      const isScanner = val.length >= 4 && totalInputDuration <= 400 && lastCharGap <= 300 && !isSubmitting;
+
+      if (isScanner) {
+        isSubmitting = true;
+        setTimeout(() => {
+          submitReturnForm();
+          firstInputTime = 0;
+          lastCharTime = 0;
+          lastValue = "";
+          isSubmitting = false;
+        }, 100);
+      }
+    });
+
+    returnInput.addEventListener("blur", () => {
+      firstInputTime = 0;
+      lastCharTime = 0;
+      lastValue = "";
+      isSubmitting = false;
+    });
+  }
+});
+
+document.addEventListener("awesomplete-open", function(e) {
+  const input = e.target;
+  let ul = input.nextElementSibling;
+  if (!ul || !ul.classList.contains('awesomplete__list')) {
+    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
+    if (!ul) return;
+  }
+  const inputRect = input.getBoundingClientRect();
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+  ul.style.position = "absolute";
+  ul.style.left = (inputRect.left + scrollLeft - 10) + "px"; // 修正 awesomplete 定位
+  ul.style.top = (inputRect.bottom + scrollTop + 5) + "px"; // 修正 awesomplete 定位
+  ul.style.zIndex = 99999;
+});
+
+document.addEventListener("awesomplete-close", function(e) {
+  const input = e.target;
+  let ul = input.nextElementSibling;
+  if (!ul || !ul.classList.contains('awesomplete__list')) {
+    ul = document.querySelector('.awesomplete ul') || document.querySelector('.awesomplete__list');
+    if (!ul) return;
+  }
+  ul.style.position = "";
+  ul.style.left = "";
+  ul.style.top = "";
+  ul.style.minWidth = "";
+  ul.style.width = "";
+  ul.style.zIndex = "";
+});
+
+function showFormMessage(formId, message, color, size, timeout) {
+  const resultElem = document.getElementById(`${formId}-result`);
+  if (!resultElem) return;
+
+  resultElem.innerText = message;
+  resultElem.style.color = color;
+  resultElem.style.fontSize = size + "px";
+
+  setTimeout(() => {
+    resultElem.innerText = "";
+  }, timeout);
+}
+</script>
+</body>
+</html>

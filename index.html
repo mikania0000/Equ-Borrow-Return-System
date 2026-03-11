@@ -124,6 +124,15 @@
       opacity: 1;
     }
 
+    /* ✅ 新增：選取(聚焦)時顯示醒目的粉紅邊框 */
+    .form-group .field-wrapper input[type="text"]:focus,
+    .form-group .field-wrapper select:focus,
+    .form-group .field-wrapper input[type="password"]:focus {
+      outline: none;
+      border: 2px solid #FF1493 !important; /* 桃紅色邊框 */
+      box-shadow: 0 0 10px rgba(255, 20, 147, 0.4); /* 粉色發光效果 */
+    }
+
     /* ==========================================
        ✅ Awesomplete 自動完成套件修正 (預設電腦版靠右)
        ========================================== */
@@ -646,6 +655,24 @@ document.addEventListener("DOMContentLoaded", function() {
       if (e.key === "Enter") {
         e.preventDefault();
         document.getElementById("borrow-unit").focus();
+      }
+    });
+  }
+
+  // ✅ 新增：借用單位選擇完畢後，自動跳到借用天數欄位
+  const borrowUnitSelect = document.getElementById("borrow-unit");
+  if (borrowUnitSelect) {
+    // 透過滑鼠點擊改變選項時觸發
+    borrowUnitSelect.addEventListener("change", function() {
+      setTimeout(() => {
+        document.getElementById("borrow-days").focus();
+      }, 50);
+    });
+    // 透過鍵盤按 Enter 時觸發
+    borrowUnitSelect.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("borrow-days").focus();
       }
     });
   }

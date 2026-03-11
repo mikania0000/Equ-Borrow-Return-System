@@ -24,7 +24,7 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       box-sizing: border-box;
-      position: relative; /* ✅ 讓內部絕對定位的元素以此為基準 */
+      position: relative;
     }
     h1 {
       font-size: 65px;
@@ -83,9 +83,6 @@
       display: block;
     }
 
-    /* ==========================================
-       ✅ 統一表單排版 (Flexbox 置中對齊)
-       ========================================== */
     .form-group {
       display: flex;
       align-items: center;
@@ -125,25 +122,20 @@
       opacity: 1;
     }
 
-    /* ✅ 新增：選取(聚焦)時顯示醒目的粉紅邊框 */
     .form-group .field-wrapper input[type="text"]:focus,
     .form-group .field-wrapper select:focus,
     .form-group .field-wrapper input[type="password"]:focus {
       outline: none;
-      border: 2px solid #FF1493 !important; /* 桃紅色邊框 */
-      box-shadow: 0 0 10px rgba(255, 20, 147, 0.4); /* 粉色發光效果 */
+      border: 2px solid #FF1493 !important; 
+      box-shadow: 0 0 10px rgba(255, 20, 147, 0.4); 
     }
 
-    /* ✅ 新增：按鈕聚焦時的醒目提示 */
     button:focus {
       outline: 3px solid #FF1493;
       outline-offset: 2px;
       box-shadow: 0 0 12px rgba(255, 20, 147, 0.8);
     }
 
-    /* ==========================================
-       ✅ Awesomplete 自動完成套件修正 (預設電腦版靠右)
-       ========================================== */
     .awesomplete {
       display: block !important;
       width: 100% !important;
@@ -152,7 +144,7 @@
     }
     .awesomplete > ul {
       position: absolute !important;
-      left: 100% !important; /* 🌟 電腦版出現在右側 */
+      left: 100% !important; 
       top: 0 !important;
       margin-left: 15px !important;
       margin-top: 0 !important;
@@ -170,7 +162,6 @@
       padding: 10px 15px !important;
     }
     
-    /* 掃描按鈕專屬樣式 */
     .btn-scan-small {
       background-color: yellow;
       color: black;
@@ -242,7 +233,6 @@
     .btn-red { background-color: #FF4D4D; color: white; }
     .btn-clear { background-color: yellow; color: black; }
 
-    /* 進階設定區的外部連結按鈕 */
     .settings-btn {
       width: 220px;
       color: white;
@@ -254,9 +244,6 @@
     }
     .settings-btn-dark { color: black !important; }
 
-    /* ==========================================
-       📱 手機版響應式設計 (RWD)
-       ========================================== */
     @media (max-width: 768px) {
       body { padding: 0; }
       .container { width: 100%; padding: 15px 10px; margin-top: 0; border-radius: 0; }
@@ -265,17 +252,15 @@
       h2 { font-size: 26px; }
       .form-header { padding: 5px 15px; }
 
-      /* 主導覽按鈕 (兩兩並排) */
       .button-container { padding: 5px; gap: 8px; }
       .button-container button { 
         width: calc(50% - 8px); 
-        font-size: 20px; /* ✅ 手機版一律為 20px */
+        font-size: 20px; 
         padding: 12px 5px; 
         margin: 0; 
         flex-shrink: 0; 
       }
 
-      /* 表單群組改為上下排列 */
       .form-group { flex-direction: column; align-items: stretch; margin-bottom: 20px; }
       .form-group label { 
         width: 100%; 
@@ -289,10 +274,8 @@
       .form-group .field-wrapper input[type="text"],
       .form-group .field-wrapper select { font-size: 20px; height: 50px; }
       
-      /* 掃描按鈕跟輸入框一樣寬 */
       .btn-scan-small { width: 100%; height: 50px; font-size: 20px; }
 
-      /* ✅ 手機版 Awesomplete 自動完成移回下方 */
       .awesomplete > ul { 
         left: 0 !important; 
         top: 100% !important; 
@@ -303,26 +286,21 @@
         max-height: 250px !important;
       }
 
-      /* 表單底部操作按鈕 */
       .button-group { flex-direction: column; width: 100%; gap: 10px; }
       .button-group button { width: 100%; font-size: 22px; margin: 0; }
 
-      /* 查詢結果表格防破版 (橫向滾動) */
       #query-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; background: white; padding: 5px; border-radius: 5px;}
       .query-table th, .query-table td { white-space: nowrap; font-size: 16px; padding: 8px; }
       
-      /* 進階設定按鈕佔滿寬度 */
       .settings-btn { width: 100%; font-size: 20px; }
       .settings-wrapper { flex-direction: column; }
 
-      /* 修正對話框寬度 */
       #password-dialog, #delete-confirm-dialog { width: 90% !important; box-sizing: border-box; }
       .repair-card { padding: 20px !important; width: 100% !important; box-sizing: border-box; }
       .repair-actions { flex-direction: column; gap: 10px !important; }
       .repair-actions button { width: 100% !important; }
     }
 
-    /* ✅ 新增：右上角網路狀態圖示樣式 */
     #network-status {
       position: absolute;
       top: 20px;
@@ -360,9 +338,10 @@
 </head>
 <body>
   <div class="container">
-    <!-- ✅ 網路狀態改為圖示，並移至白色容器的右上角 -->
-    <div id="network-status" title="連線狀態">
+    <!-- ✅ 網路狀態與離線暫存標籤 -->
+    <div id="network-status" title="連線狀態" onclick="syncOfflineActions(true)" style="cursor: pointer;">
       <div id="network-icon"></div>
+      <div id="offline-badge" style="display: none; position: absolute; top: -8px; right: -8px; background: #FF1493; color: white; font-size: 14px; padding: 2px 6px; border-radius: 10px; font-weight: bold; box-shadow: 0 0 5px rgba(0,0,0,0.3);">0</div>
     </div>
 
     <h1>鳳甲國中設備管理系統</h1>
@@ -605,7 +584,7 @@
       </div>
     </div>
     <div style="display:flex; justify-content:center; gap:10px;">
-      <button onclick="verifyPassword()" style="font-size:20px; padding:10px 20px; background-color:#4CAF50; color:white; border:none; border-radius:5px;">確認</button>
+      <button id="btn-verify-pwd" onclick="verifyPassword()" style="font-size:20px; padding:10px 20px; background-color:#4CAF50; color:white; border:none; border-radius:5px;">確認</button>
       <button onclick="closePasswordDialog()" style="font-size:20px; padding:10px 20px; background-color:#ccc; color:black; border:none; border-radius:5px;">取消</button>
     </div>
     <p id="password-error" style="color:red; font-size:18px; display:none; margin-top:10px;">密碼錯誤，請重試！</p>
@@ -630,17 +609,115 @@
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyRjMxPiPPPk3uGmVbSe2n7lwIsq3o0KfhU9LwS1Jz2KE8qF9rjpDzMiFmaUxoYuH1J/exec";
 
 // ==========================================
-// 🚀 網路狀態燈號監控
+// 🚀 離線暫存與網路狀態監控 (LocalStorage)
 // ==========================================
+function getOfflineQueue() {
+  try {
+    return JSON.parse(localStorage.getItem('offlineQueue') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function setOfflineQueue(queue) {
+  localStorage.setItem('offlineQueue', JSON.stringify(queue));
+}
+
+function addOfflineAction(action, params) {
+  const queue = getOfflineQueue();
+  queue.push({
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    action: action,
+    params: params,
+    timestamp: new Date().getTime()
+  });
+  setOfflineQueue(queue);
+  updateNetworkStatus();
+}
+
+let isSyncing = false;
+async function syncOfflineActions(manual = false) {
+  if (isSyncing) return;
+  const queue = getOfflineQueue();
+  
+  if (queue.length === 0) {
+     if (manual) showFloatingMessage("目前沒有需要同步的離線資料", "info", 2000);
+     return;
+  }
+  if (!navigator.onLine) {
+     if (manual) showFloatingMessage("目前網路離線，無法同步", "warn", 2000);
+     return;
+  }
+
+  isSyncing = true;
+  showFloatingMessage(`🔄 開始同步 ${queue.length} 筆離線紀錄...`, "info");
+  
+  let successCount = 0;
+  let failedCount = 0;
+  let processedIds = [];
+
+  for (let i = 0; i < queue.length; i++) {
+    const item = queue[i];
+    try {
+      // 直接呼叫 fetch，避開 callGasApi 的攔截器
+      const response = await fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: item.action, ...item.params })
+      }).then(res => res.json());
+
+      if (response && response.status !== 'error') {
+         successCount++;
+         processedIds.push(item.id);
+      } else if (response.status === 'error') {
+         // 如果是邏輯錯誤(如條碼不存在)，直接拋棄該筆紀錄避免永遠卡在佇列
+         failedCount++;
+         processedIds.push(item.id);
+         console.warn("離線資料同步失敗(將拋棄該筆):", response.message);
+      }
+    } catch (err) {
+      console.error("網路異常，保留在佇列中等下次同步:", err);
+    }
+  }
+  
+  // 更新本機端佇列 (只保留尚未處理成功的)
+  const latestQueue = getOfflineQueue();
+  const remainingQueue = latestQueue.filter(q => !processedIds.includes(q.id));
+  setOfflineQueue(remainingQueue);
+  
+  isSyncing = false;
+  
+  if (successCount > 0 || failedCount > 0) {
+     showFloatingMessage(`✅ 同步完成！成功: ${successCount} 筆` + (failedCount > 0 ? ` (丟棄異常紀錄: ${failedCount} 筆)` : ''), "success", 4000);
+  }
+  updateNetworkStatus(); 
+}
+
 function updateNetworkStatus() {
   const iconContainer = document.getElementById("network-icon");
   const statusElem = document.getElementById("network-status");
+  const badge = document.getElementById("offline-badge");
   if (!iconContainer || !statusElem) return;
+
+  const queue = getOfflineQueue();
+  
+  if (queue.length > 0) {
+    badge.style.display = "block";
+    badge.innerText = queue.length;
+    statusElem.title = `連線狀態 (待同步: ${queue.length} 筆)`;
+  } else {
+    badge.style.display = "none";
+    statusElem.title = "連線正常";
+  }
 
   if (navigator.onLine) {
     iconContainer.innerHTML = `<svg class="wifi-icon" style="stroke: #32CD32; filter: drop-shadow(0 0 3px rgba(50,205,50,0.5));" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`;
     iconContainer.classList.remove("offline-blink");
-    statusElem.title = "連線正常";
+    
+    // 如果上線且有佇列，自動觸發同步
+    if (queue.length > 0) {
+      syncOfflineActions();
+    }
   } else {
     iconContainer.innerHTML = `<svg class="wifi-icon" style="stroke: #FF0000; filter: drop-shadow(0 0 3px rgba(255,0,0,0.6));" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/><path d="M5 12.55a11 11 0 0 1 5.34-2.21"/><path d="M14.66 10.34a11 11 0 0 1 4.42 2.21"/><path d="M1.42 9a16 16 0 0 1 6.48-3.03"/><path d="M12.92 5.97a16 16 0 0 1 9.66 3.03"/></svg>`;
     iconContainer.classList.add("offline-blink");
@@ -648,7 +725,6 @@ function updateNetworkStatus() {
   }
 }
 
-// 監聽瀏覽器網路狀態變化
 window.addEventListener('online', updateNetworkStatus);
 window.addEventListener('offline', updateNetworkStatus);
 document.addEventListener("DOMContentLoaded", updateNetworkStatus);
@@ -663,7 +739,7 @@ let cancelFormTimer = null;
 
 function startInactivityTimer() {
   clearTimeout(inactivityTimer);
-  clearTimeout(cancelFormTimer); // 使用者有動作，立刻解除即將被關閉的倒數
+  clearTimeout(cancelFormTimer); 
 
   const existingWarning = document.getElementById("idle-warning-msg");
   if (existingWarning) {
@@ -674,11 +750,10 @@ function startInactivityTimer() {
 
   inactivityTimer = setTimeout(() => {
     showIdleWarning(currentActiveForm);
-  }, 120000); // 2分鐘無動作顯示警告
+  }, 120000); 
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  // 只在網頁載入時綁定一次，解決重複綁定卡頓問題
   ["mousemove", "keypress", "click", "input", "touchstart"].forEach(event => {
     document.addEventListener(event, () => {
       if (currentActiveForm) startInactivityTimer();
@@ -687,12 +762,25 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 // ==========================================
-// 共用 API 呼叫函式 (修復設備休眠斷網未處理)
+// 共用 API 呼叫函式 (支援離線暫存邏輯)
 // ==========================================
 function callGasApi(action, params = {}) {
-  // 呼叫 API 前也快速檢查一下燈號
   updateNetworkStatus();
   
+  if (!navigator.onLine) {
+    // 只有借用跟歸還可以在斷線時操作
+    if (action === "borrowEquipment" || action === "returnEquipment") {
+      addOfflineAction(action, params);
+      return Promise.resolve({ 
+        status: "success", // 偽裝成成功以清空輸入框
+        message: `📴 網路斷線，已暫存於本機，連線後將自動同步！` 
+      });
+    } else {
+      showFloatingMessage("📡 網路斷線，此功能(查詢/設定/驗證密碼)需要連線！", "error", 3000);
+      return Promise.reject(new Error("Offline"));
+    }
+  }
+
   return fetch(GAS_API_URL, {
     method: 'POST',
     headers: {
@@ -702,16 +790,23 @@ function callGasApi(action, params = {}) {
   }).then(res => res.json())
     .catch(error => {
       console.error("API 連線失敗:", error);
-      updateNetworkStatus(); // 斷線時更新燈號
-      showFloatingMessage("📡 網路連線異常，請確認網路狀態後重試！", "error", 4000);
+      updateNetworkStatus(); 
       
-      // 如果有進度條正在跑，將其清除以防畫面卡死
       const bars = document.querySelectorAll('[id$="-progress-bar"]');
       bars.forEach(bar => {
         const parent = bar.parentElement?.parentElement;
         if (parent) parent.innerHTML = "";
       });
-      throw error;
+
+      // 如果是發送途中斷網，改為本機暫存
+      if (action === "borrowEquipment" || action === "returnEquipment") {
+          addOfflineAction(action, params);
+          showFloatingMessage("📡 連線不穩，已轉為離線暫存，連線後將自動同步！", "info", 4000);
+          return { status: "success", message: "轉為離線儲存" }; 
+      } else {
+          showFloatingMessage("📡 網路連線異常，請確認網路狀態後重試！", "error", 4000);
+          throw error;
+      }
     });
 }
 
@@ -1017,7 +1112,7 @@ function showIdleWarning(formId) {
   const activeSection = document.querySelector(".form-section.active");
   if (!activeSection) return;
 
-  if (document.getElementById("idle-warning-msg")) return; // 防呆避免重複生成
+  if (document.getElementById("idle-warning-msg")) return; 
 
   const msg = document.createElement("div");
   msg.id = "idle-warning-msg";
@@ -1043,7 +1138,6 @@ function showIdleWarning(formId) {
     setTimeout(() => { if (msg) msg.remove(); }, 1000);
   }, 3000);
 
-  // 15 秒後強制關閉
   cancelFormTimer = setTimeout(() => {
     cancelForm(formId);
   }, 15000);
@@ -1179,7 +1273,6 @@ function showForm(formId, fromPassword = false) {
     setTimeout(() => { document.getElementById("query-name")?.focus(); }, 200);
   }
 
-  // 啟用全域閒置計時器
   currentActiveForm = formId;
   startInactivityTimer();
 
@@ -1688,7 +1781,8 @@ function openPasswordDialog(formId) {
   document.getElementById("password-dialog").style.display = "block";
   document.getElementById("password-input").value = "";
   document.getElementById("password-error").style.display = "none";
-  document.getElementById("password-input").focus();
+  
+  setTimeout(() => document.getElementById("password-input").focus(), 100);
 
   const inputElem = document.getElementById("password-input");
   inputElem.onkeydown = function(event) {
@@ -1699,26 +1793,46 @@ function openPasswordDialog(formId) {
   };
 }
 
+// 🌟 修改：密碼驗證改呼叫 Google Apps Script 
 function verifyPassword() {
-  const input = document.getElementById("password-input").value;
-  if (input === "000000") {
-    passwordVerified = true;
-    closePasswordDialog();
+  const inputElem = document.getElementById("password-input");
+  const errorElem = document.getElementById("password-error");
+  const btn = document.getElementById("btn-verify-pwd");
+  const input = inputElem.value;
+  
+  if (!input) return;
 
-    if (pendingFormId) {
-      const target = pendingFormId;
-      pendingFormId = null;
-      setTimeout(() => {
-        showForm(target, true);
-      }, 100); 
-    }
-  } else {
-    const errorElem = document.getElementById("password-error");
-    errorElem.style.display = "block";
-    setTimeout(function () {
-      errorElem.style.display = "none";
-    }, 2000);
-  }
+  // 避免連點
+  inputElem.disabled = true;
+  btn.innerText = "驗證中...";
+  errorElem.style.display = "none";
+
+  callGasApi("verifyPassword", { password: input })
+    .then(response => {
+      inputElem.disabled = false;
+      btn.innerText = "確認";
+
+      if (response.status === "success") {
+        passwordVerified = true;
+        closePasswordDialog();
+        if (pendingFormId) {
+          const target = pendingFormId;
+          pendingFormId = null;
+          setTimeout(() => { showForm(target, true); }, 100); 
+        }
+      } else {
+        errorElem.innerText = "❌ 密碼錯誤，請重試！";
+        errorElem.style.display = "block";
+        setTimeout(() => { errorElem.style.display = "none"; }, 2000);
+      }
+    })
+    .catch(err => {
+      inputElem.disabled = false;
+      btn.innerText = "確認";
+      errorElem.innerText = "⚠️ 驗證失敗，請檢查網路！";
+      errorElem.style.display = "block";
+      setTimeout(() => { errorElem.style.display = "none"; }, 2000);
+    });
 }
 
 function closePasswordDialog() {

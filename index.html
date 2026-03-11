@@ -213,7 +213,7 @@
     .btn-query  { background-color: #FFEB3B; color: black; }
     .btn-new    { background-color: #FF8C00; }
     .btn-chalk  { background-color: #FF69B4; color: black; }
-    .btn-settings { background-color: #FF6347; color: white; } /* ✅ 將進階設定按鈕樣式移回 CSS 統一控管 */
+    .btn-settings { background-color: #FF6347; color: white; }
     .btn-cancel { background-color: #6c757d; }
     
     button:hover { opacity: 0.8; transform: scale(1.05); }
@@ -320,9 +320,51 @@
       .repair-actions { flex-direction: column; gap: 10px !important; }
       .repair-actions button { width: 100% !important; }
     }
+
+    /* ✅ 新增：右上角網路狀態燈號樣式 */
+    #network-status {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 12px;
+      border-radius: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 10000;
+      border: 1px solid #ddd;
+      transition: all 0.3s ease;
+    }
+    .status-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background-color: #32CD32;
+      box-shadow: 0 0 8px #32CD32;
+      transition: all 0.3s;
+    }
+    .status-dot.offline {
+      background-color: #FF0000;
+      box-shadow: 0 0 10px #FF0000;
+      animation: blink 1s infinite alternate;
+    }
+    @keyframes blink {
+      from { opacity: 1; }
+      to { opacity: 0.4; }
+    }
   </style>
 </head>
 <body>
+  <!-- ✅ 新增：網路狀態燈號 UI -->
+  <div id="network-status">
+    <div id="network-dot" class="status-dot"></div>
+    <span id="network-text">連線正常</span>
+  </div>
+
   <div class="container">
     <h1>鳳甲國中設備管理系統</h1>
     <div class="button-container">
@@ -588,15 +630,93 @@
 // ==========================================
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyRjMxPiPPPk3uGmVbSe2n7lwIsq3o0KfhU9LwS1Jz2KE8qF9rjpDzMiFmaUxoYuH1J/exec";
 
-// 共用 API 呼叫函式
+// ==========================================
+// 🚀 網路狀態燈號監控
+// ==========================================
+function updateNetworkStatus() {
+  const dotElem = document.getElementById("network-dot");
+  const textElem = document.getElementById("network-text");
+  const statusElem = document.getElementById("network-status");
+  if (!dotElem || !textElem || !statusElem) return;
+
+  if (navigator.onLine) {
+    dotElem.classList.remove("offline");
+    textElem.innerText = "連線正常";
+    textElem.style.color = "#333";
+    statusElem.style.borderColor = "#ddd";
+  } else {
+    dotElem.classList.add("offline");
+    textElem.innerText = "網路斷線";
+    textElem.style.color = "#FF0000";
+    statusElem.style.borderColor = "#FF0000";
+  }
+}
+
+// 監聽瀏覽器網路狀態變化
+window.addEventListener('online', updateNetworkStatus);
+window.addEventListener('offline', updateNetworkStatus);
+document.addEventListener("DOMContentLoaded", updateNetworkStatus);
+
+
+// ==========================================
+// 🚀 全域防閒置設定 (修復 Memory Leak)
+// ==========================================
+let currentActiveForm = null;
+let inactivityTimer = null;
+let cancelFormTimer = null;
+
+function startInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  clearTimeout(cancelFormTimer); // 使用者有動作，立刻解除即將被關閉的倒數
+
+  const existingWarning = document.getElementById("idle-warning-msg");
+  if (existingWarning) {
+    existingWarning.remove();
+  }
+
+  if (!currentActiveForm) return;
+
+  inactivityTimer = setTimeout(() => {
+    showIdleWarning(currentActiveForm);
+  }, 120000); // 2分鐘無動作顯示警告
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  // 只在網頁載入時綁定一次，解決重複綁定卡頓問題
+  ["mousemove", "keypress", "click", "input", "touchstart"].forEach(event => {
+    document.addEventListener(event, () => {
+      if (currentActiveForm) startInactivityTimer();
+    }, { passive: true });
+  });
+});
+
+// ==========================================
+// 共用 API 呼叫函式 (修復設備休眠斷網未處理)
+// ==========================================
 function callGasApi(action, params = {}) {
+  // 呼叫 API 前也快速檢查一下燈號
+  updateNetworkStatus();
+  
   return fetch(GAS_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'text/plain;charset=utf-8',
     },
     body: JSON.stringify({ action: action, ...params })
-  }).then(res => res.json());
+  }).then(res => res.json())
+    .catch(error => {
+      console.error("API 連線失敗:", error);
+      updateNetworkStatus(); // 斷線時更新燈號
+      showFloatingMessage("📡 網路連線異常，請確認網路狀態後重試！", "error", 4000);
+      
+      // 如果有進度條正在跑，將其清除以防畫面卡死
+      const bars = document.querySelectorAll('[id$="-progress-bar"]');
+      bars.forEach(bar => {
+        const parent = bar.parentElement?.parentElement;
+        if (parent) parent.innerHTML = "";
+      });
+      throw error;
+    });
 }
 
 
@@ -612,20 +732,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
   borrowNameInput = document.getElementById("borrow-name");
   
-  // ✅ 新增：輸入姓名按 Enter 自動跳到條碼欄位
   if (borrowNameInput) {
     borrowNameInput.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
-        e.preventDefault(); // 阻止表單預設行為
+        e.preventDefault(); 
         setTimeout(() => {
           document.getElementById("borrow-barcode").focus();
-        }, 50); // 延遲一點點確保自動完成套件處理完畢
+        }, 50); 
       }
     });
 
     borrowNameInput.addEventListener("input", filterNameList);
 
-    // ✅ 新增安全檢查，防止外部 CDN 載入失敗導致後續腳本崩潰
     if (typeof Awesomplete !== 'undefined') {
       borrowNameInput._awesomplete = new Awesomplete(borrowNameInput, {
         minChars: 0,
@@ -644,7 +762,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
       borrowNameInput.addEventListener("awesomplete-selectcomplete", function(e) {
         borrowNameInput.value = e.text.value;
-        // ✅ 新增：選完姓名後自動跳轉到設備條碼欄位
         setTimeout(() => {
           const barcodeInput = document.getElementById("borrow-barcode");
           if (barcodeInput) barcodeInput.focus();
@@ -655,7 +772,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  // ✅ 新增：掃描完（或手動輸入按 Enter）自動跳到借用單位欄位
   const borrowBarcodeInput = document.getElementById("borrow-barcode");
   if (borrowBarcodeInput) {
     borrowBarcodeInput.addEventListener("keydown", function(e) {
@@ -666,16 +782,13 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // ✅ 新增：借用單位選擇完畢後，自動跳到借用天數欄位
   const borrowUnitSelect = document.getElementById("borrow-unit");
   if (borrowUnitSelect) {
-    // 透過滑鼠點擊改變選項時觸發
     borrowUnitSelect.addEventListener("change", function() {
       setTimeout(() => {
         document.getElementById("borrow-days").focus();
       }, 50);
     });
-    // 透過鍵盤按 Enter 時觸發
     borrowUnitSelect.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -684,17 +797,14 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // ✅ 新增：借用天數選擇完畢後，自動跳到確定借用按鈕
   const borrowDaysSelect = document.getElementById("borrow-days");
   if (borrowDaysSelect) {
-    // 透過滑鼠點擊改變選項時觸發跳轉
     borrowDaysSelect.addEventListener("change", function() {
       setTimeout(() => {
         const submitBtn = document.getElementById("btn-submit-borrow");
         if(submitBtn) submitBtn.focus();
       }, 50);
     });
-    // 透過鍵盤按 Enter 時觸發跳轉
     borrowDaysSelect.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -704,7 +814,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // 其他初始化邏輯...
   ["scanner-container-borrow", "scanner-container-return"].forEach(id => {
     const container = document.getElementById(id);
     if (container) {
@@ -908,33 +1017,15 @@ function submitBorrowForm() {
   });
 }
 
-let inactivityTimer = null;
-
-function startInactivityTimer(formId) {
-  clearTimeout(inactivityTimer); 
-  inactivityTimer = setTimeout(() => {
-    showIdleWarning(formId); 
-  }, 120000); 
-}
-
-function monitorUserActivity(formId) {
-  const formElem = document.getElementById(formId);
-  if (!formElem) return;
-
-  ["mousemove", "keypress", "click", "input", "touchstart"].forEach(event => {
-    formElem.addEventListener(event, () => startInactivityTimer(formId));
-  });
-  startInactivityTimer(formId);
-}
-
 function showIdleWarning(formId) {
   const activeSection = document.querySelector(".form-section.active");
-  if (!activeSection) {
-    return;
-  }
+  if (!activeSection) return;
+
+  if (document.getElementById("idle-warning-msg")) return; // 防呆避免重複生成
 
   const msg = document.createElement("div");
-  msg.innerText = "⚠️ 15 秒後將返回主畫面";
+  msg.id = "idle-warning-msg";
+  msg.innerText = "⚠️ 15 秒後將自動返回主畫面";
   msg.style.position = "fixed";
   msg.style.top = "50%";
   msg.style.left = "50%";
@@ -952,11 +1043,12 @@ function showIdleWarning(formId) {
   document.body.appendChild(msg);
 
   setTimeout(() => {
-    msg.style.opacity = 0;
-    setTimeout(() => msg.remove(), 1000);
+    if (msg) msg.style.opacity = 0;
+    setTimeout(() => { if (msg) msg.remove(); }, 1000);
   }, 3000);
 
-  setTimeout(() => {
+  // 15 秒後強制關閉
+  cancelFormTimer = setTimeout(() => {
     cancelForm(formId);
   }, 15000);
 }
@@ -1091,7 +1183,9 @@ function showForm(formId, fromPassword = false) {
     setTimeout(() => { document.getElementById("query-name")?.focus(); }, 200);
   }
 
-  monitorUserActivity(formId);
+  // 啟用全域閒置計時器
+  currentActiveForm = formId;
+  startInactivityTimer();
 
   const target = document.getElementById(formId);
   if (target) {
@@ -1100,6 +1194,10 @@ function showForm(formId, fromPassword = false) {
 }
 
 function cancelForm(formId) {
+  currentActiveForm = null;
+  clearTimeout(inactivityTimer);
+  clearTimeout(cancelFormTimer);
+
   document.getElementById(formId).classList.remove('active');
 
   let inputs = document.querySelectorAll(`#${formId} input, #${formId} select`);

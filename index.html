@@ -133,6 +133,13 @@
       box-shadow: 0 0 10px rgba(255, 20, 147, 0.4); /* 粉色發光效果 */
     }
 
+    /* ✅ 新增：按鈕聚焦時的醒目提示 */
+    button:focus {
+      outline: 3px solid #FF1493;
+      outline-offset: 2px;
+      box-shadow: 0 0 12px rgba(255, 20, 147, 0.8);
+    }
+
     /* ==========================================
        ✅ Awesomplete 自動完成套件修正 (預設電腦版靠右)
        ========================================== */
@@ -384,7 +391,7 @@
       </div>
 
       <div class="button-group">
-        <button class="btn-borrow" onclick="submitBorrowForm()">確定借用</button>
+        <button id="btn-submit-borrow" class="btn-borrow" onclick="submitBorrowForm()">確定借用</button>
         <button class="btn-red" onclick="loadLastBorrowRecord()">連續借用</button>
         <button class="btn-clear" onclick="resetBorrowForm()">清除</button>
         <button class="btn-cancel" onclick="cancelForm('borrow')">離開</button>
@@ -673,6 +680,26 @@ document.addEventListener("DOMContentLoaded", function() {
       if (e.key === "Enter") {
         e.preventDefault();
         document.getElementById("borrow-days").focus();
+      }
+    });
+  }
+
+  // ✅ 新增：借用天數選擇完畢後，自動跳到確定借用按鈕
+  const borrowDaysSelect = document.getElementById("borrow-days");
+  if (borrowDaysSelect) {
+    // 透過滑鼠點擊改變選項時觸發跳轉
+    borrowDaysSelect.addEventListener("change", function() {
+      setTimeout(() => {
+        const submitBtn = document.getElementById("btn-submit-borrow");
+        if(submitBtn) submitBtn.focus();
+      }, 50);
+    });
+    // 透過鍵盤按 Enter 時觸發跳轉
+    borrowDaysSelect.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const submitBtn = document.getElementById("btn-submit-borrow");
+        if(submitBtn) submitBtn.focus();
       }
     });
   }

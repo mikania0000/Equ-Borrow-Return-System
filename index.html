@@ -595,7 +595,18 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("borrow-identity").addEventListener("change", loadNameList);
 
   borrowNameInput = document.getElementById("borrow-name");
+  
+  // ✅ 新增：輸入姓名按 Enter 自動跳到條碼欄位
   if (borrowNameInput) {
+    borrowNameInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault(); // 阻止表單預設行為
+        setTimeout(() => {
+          document.getElementById("borrow-barcode").focus();
+        }, 50); // 延遲一點點確保自動完成套件處理完畢
+      }
+    });
+
     borrowNameInput.addEventListener("input", filterNameList);
 
     // ✅ 新增安全檢查，防止外部 CDN 載入失敗導致後續腳本崩潰
@@ -617,10 +628,78 @@ document.addEventListener("DOMContentLoaded", function() {
 
       borrowNameInput.addEventListener("awesomplete-selectcomplete", function(e) {
         borrowNameInput.value = e.text.value;
+        // ✅ 新增：選完姓名後自動跳轉到設備條碼欄位
+        setTimeout(() => {
+          const barcodeInput = document.getElementById("borrow-barcode");
+          if (barcodeInput) barcodeInput.focus();
+        }, 50);
       });
     } else {
       console.warn("Awesomplete 尚未載入，自動完成功能已停用。");
     }
+  }
+
+  // ✅ 新增：掃描完（或手動輸入按 Enter）自動跳到借用單位欄位
+  const borrowBarcodeInput = document.getElementById("borrow-barcode");
+  if (borrowBarcodeInput) {
+    borrowBarcodeInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("borrow-unit").focus();
+      }
+    });
+  }
+
+  // 其他初始化邏輯...
+  ["scanner-container-borrow", "scanner-container-return"].forEach(id => {
+    const container = document.getElementById(id);
+    if (container) {
+      container.style.width = "100%";
+      container.style.maxWidth = "500px";
+      container.style.height = "auto";
+      container.style.minHeight = "300px";
+      container.style.margin = "auto";
+      container.style.border = "2px solid #999";
+      container.style.borderRadius = "10px";
+      container.style.marginBottom = "60px";  
+    }
+  });
+
+  let identitySelect = document.getElementById("borrow-identity");
+  if (identitySelect) {
+    identitySelect.value = "教師";
+    identitySelect.disabled = true; 
+  }
+
+  let queryBtn = document.getElementById("query-button");
+  if (queryBtn) {
+    queryBtn.style.backgroundColor = "#32CD32"; 
+    queryBtn.style.color = "white";
+  }
+
+  let clearBtn = document.getElementById("clear-button");
+  if (clearBtn) {
+    clearBtn.style.backgroundColor = "#FF69B4"; 
+    clearBtn.style.color = "white";
+  }
+
+  let identityToggleBtn = document.getElementById("identity-toggle-button");
+  if (identityToggleBtn) {
+    identityToggleBtn.style.backgroundColor = "#5D0092"; 
+    identityToggleBtn.style.color = "white";
+    identityToggleBtn.style.fontSize = "28px";
+    identityToggleBtn.style.fontWeight = "bold";
+    identityToggleBtn.style.padding = "12px 24px";
+    identityToggleBtn.style.borderRadius = "8px";
+    identityToggleBtn.style.cursor = "pointer";
+    identityToggleBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.2)";
+  }
+
+  applyTableFormatting();
+  let observer = new MutationObserver(applyTableFormatting);
+  let tableContainer = document.getElementById("query-table-container");
+  if (tableContainer) {
+    observer.observe(tableContainer, { childList: true, subtree: true });
   }
 });
 
@@ -1517,57 +1596,6 @@ function cancelEditMode(uuid, originalUnit, originalDays) {
   };
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-["scanner-container-borrow", "scanner-container-return"].forEach(id => {
-  const container = document.getElementById(id);
-  if (container) {
-    container.style.width = "100%";
-    container.style.maxWidth = "500px";
-    container.style.height = "auto";
-    container.style.minHeight = "300px";
-    container.style.margin = "auto";
-    container.style.border = "2px solid #999";
-    container.style.borderRadius = "10px";
-    container.style.marginBottom = "60px";  
-  }
-});
-
-  let identitySelect = document.getElementById("borrow-identity");
-  if (identitySelect) {
-    identitySelect.value = "教師";
-    identitySelect.disabled = true; 
-  }
-
-  let queryBtn = document.getElementById("query-button");
-  if (queryBtn) {
-    queryBtn.style.backgroundColor = "#32CD32"; 
-    queryBtn.style.color = "white";
-  }
-
-  let clearBtn = document.getElementById("clear-button");
-  if (clearBtn) {
-    clearBtn.style.backgroundColor = "#FF69B4"; 
-    clearBtn.style.color = "white";
-  }
-
-  let identityToggleBtn = document.getElementById("identity-toggle-button");
-  if (identityToggleBtn) {
-    identityToggleBtn.style.backgroundColor = "#5D0092"; 
-    identityToggleBtn.style.color = "white";
-    identityToggleBtn.style.fontSize = "28px";
-    identityToggleBtn.style.fontWeight = "bold";
-    identityToggleBtn.style.padding = "12px 24px";
-    identityToggleBtn.style.borderRadius = "8px";
-    identityToggleBtn.style.cursor = "pointer";
-    identityToggleBtn.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.2)";
-  }
-
-  // 移除舊的 JS 寬度、間距動態控制（現在全部由 CSS .form-group 和 .field-wrapper 接管控制了）
-  
-  // ✅ 移除在 JavaScript 中覆寫設定按鈕樣式的區塊，交由 CSS 控制
-
-});
-
 function applyTableFormatting() {
   let table = document.querySelector(".query-table");
   if (!table) return;
@@ -1632,12 +1660,6 @@ buttons.forEach(btn => {
   }
 });
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-  applyTableFormatting();
-  let observer = new MutationObserver(applyTableFormatting);
-  observer.observe(document.getElementById("query-table-container"), { childList: true, subtree: true });
-});
 
 function submitRepairStatusChange() {
   const barcode = document.getElementById("query-barcode").value.trim();

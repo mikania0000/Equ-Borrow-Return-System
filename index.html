@@ -2,7 +2,6 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <!-- ✅ 確保手機端比例正確，並防止輸入時畫面縮放 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>鳳甲國中設備管理系統</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/awesomplete@1.1.5/awesomplete.css" />
@@ -295,7 +294,7 @@
       .settings-btn { width: 100%; font-size: 20px; }
       .settings-wrapper { flex-direction: column; }
 
-      #auth-modal, #delete-confirm-dialog { width: 90% !important; box-sizing: border-box; }
+      #auth-modal, #delete-confirm-dialog, #internal-password-modal { width: 90% !important; box-sizing: border-box; }
       .repair-card { padding: 20px !important; width: 100% !important; box-sizing: border-box; }
       .repair-actions { flex-direction: column; gap: 10px !important; }
       .repair-actions button { width: 100% !important; }
@@ -334,15 +333,24 @@
         height: 26px;
       }
     }
+    /* Spinner for IP Check */
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-  <!-- ===================== 系統登入遮罩 (全域) ===================== -->
+  <!-- ===================== IP 限制遮罩 (最外層防護) ===================== -->
+  <div id="ip-block-overlay" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#f4f4f4; z-index:999999; justify-content:center; align-items:center; flex-direction:column; padding: 20px; box-sizing: border-box;">
+    <h1 style="color:#d32f2f; font-size: 40px; margin-bottom: 20px;">⛔ 系統存取受限</h1>
+    <p style="font-size: 24px; color:#333; font-weight: bold;" id="ip-message">正在驗證您的網路環境...</p>
+    <div id="ip-spinner" style="margin-top: 20px; width: 40px; height: 40px; border: 5px solid #ccc; border-top: 5px solid #1E3A8A; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+  </div>
+
+  <!-- ===================== 系統大門登入遮罩 (會記憶於 LocalStorage) ===================== -->
   <div id="system-auth-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
     <div id="auth-modal" style="background:white; padding:40px 30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); text-align:center; width: 90%; max-width: 400px;">
       <h2 style="margin-top:0; color:#1E3A8A; font-size: 32px;">系統登入</h2>
-      <p style="font-size:18px; color:#666; margin-bottom: 20px;">請輸入管理密碼以進入系統</p>
+      <p style="font-size:18px; color:#666; margin-bottom: 20px;">請輸入大門密碼以進入系統</p>
       <div style="margin: 20px 0;">
         <input id="system-password-input" type="password" placeholder="請輸入密碼" style="width: 100%; font-size: 28px; padding: 12px; text-align: center; border: 2px solid #ccc; border-radius: 8px; box-sizing: border-box; outline: none;">
       </div>
@@ -350,7 +358,24 @@
       <p id="system-password-error" style="color:#d32f2f; font-size:18px; display:none; margin-top:15px; font-weight: bold;">❌ 密碼錯誤，請重試！</p>
     </div>
   </div>
-  <!-- ========================================================= -->
+
+  <!-- ===================== 內部防護對話框 (每次點擊強制輸入，不記憶) ===================== -->
+  <div id="internal-password-dialog" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div id="internal-password-modal" style="background:white; padding:30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.4); text-align:center; width: 90%; max-width: 350px;">
+      <h2 style="margin-top:0; color:#FF8C00;">管理員驗證</h2>
+      <p style="font-size:18px; color:#666;">進入此功能需再次輸入密碼</p>
+      <div class="form-group" style="margin: 20px 0;">
+        <div class="field-wrapper" style="width: 100%;">
+          <input id="internal-password-input" type="password" placeholder="請輸入密碼" style="text-align:center; font-size: 24px; width: 100%; height: 50px;">
+        </div>
+      </div>
+      <div style="display:flex; justify-content:center; gap:15px;">
+        <button id="btn-verify-internal" onclick="verifyInternalPassword()" style="font-size:20px; padding:10px 25px; background-color:#FF8C00; color:white; border:none; border-radius:8px;">確認</button>
+        <button onclick="closeInternalPasswordDialog()" style="font-size:20px; padding:10px 25px; background-color:#ccc; color:black; border:none; border-radius:8px;">取消</button>
+      </div>
+      <p id="internal-password-error" style="color:#d32f2f; font-size:18px; display:none; margin-top:15px; font-weight: bold;">❌ 密碼錯誤，請重試！</p>
+    </div>
+  </div>
 
   <div class="container">
     <!-- ✅ 網路狀態與離線暫存標籤 -->
@@ -361,12 +386,12 @@
 
     <h1>鳳甲國中設備管理系統</h1>
     <div class="button-container">
-      <button class="btn-borrow" onclick="showForm('borrow')">借用</button>
-      <button class="btn-return" onclick="showForm('return')">歸還</button>
-      <button class="btn-new" onclick="showForm('new')">新增</button>
-      <button class="btn-query" onclick="showForm('query')">查詢</button>
+      <button class="btn-borrow" onclick="triggerMenuAction('borrow')">借用</button>
+      <button class="btn-return" onclick="triggerMenuAction('return')">歸還</button>
+      <button class="btn-new" onclick="triggerMenuAction('new')">新增</button>
+      <button class="btn-query" onclick="triggerMenuAction('query')">查詢</button>
       <button class="btn-chalk" onclick="openChalkRegistration()">粉筆板擦登記</button>
-      <button class="btn-settings" onclick="openAdvancedSettings()">進階設定</button>
+      <button class="btn-settings" onclick="triggerMenuAction('settings')">進階設定</button>
     </div>
     
     <!-- ===================== 借用設備 ===================== -->
@@ -599,7 +624,6 @@
     </div>
   </div>
 
-<!-- ✅ 移至底部以保證載入順序 -->
 <script src="https://cdn.jsdelivr.net/npm/awesomplete@1.1.5/awesomplete.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -608,6 +632,7 @@
 // 🚀 API 連線設定
 // ==========================================
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyRjMxPiPPPk3uGmVbSe2n7lwIsq3o0KfhU9LwS1Jz2KE8qF9rjpDzMiFmaUxoYuH1J/exec";
+let globalClientIp = ""; // ✅ 儲存使用者的 IP 給後端驗證
 
 // ==========================================
 // 🚀 離線暫存與網路狀態監控 (LocalStorage)
@@ -660,28 +685,29 @@ async function syncOfflineActions(manual = false) {
   for (let i = 0; i < queue.length; i++) {
     const item = queue[i];
     try {
-      // 直接呼叫 fetch，避開 callGasApi 的攔截器
       const response = await fetch(GAS_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: item.action, ...item.params })
+        body: JSON.stringify({ action: item.action, password: localStorage.getItem("system_pwd") || "", clientIp: globalClientIp, ...item.params })
       }).then(res => res.json());
 
       if (response && response.status !== 'error') {
          successCount++;
          processedIds.push(item.id);
       } else if (response.status === 'error') {
-         // 如果是邏輯錯誤(如條碼不存在)，直接拋棄該筆紀錄避免永遠卡在佇列
-         failedCount++;
-         processedIds.push(item.id);
-         console.warn("離線資料同步失敗(將拋棄該筆):", response.message);
+         if (response.message && response.message.includes("拒絕存取")) {
+            console.warn("密碼或IP失效，保留在佇列中等待重試");
+         } else {
+            failedCount++;
+            processedIds.push(item.id);
+            console.warn("離線資料同步失敗(將拋棄該筆):", response.message);
+         }
       }
     } catch (err) {
       console.error("網路異常，保留在佇列中等下次同步:", err);
     }
   }
   
-  // 更新本機端佇列 (只保留尚未處理成功的)
   const latestQueue = getOfflineQueue();
   const remainingQueue = latestQueue.filter(q => !processedIds.includes(q.id));
   setOfflineQueue(remainingQueue);
@@ -715,7 +741,6 @@ function updateNetworkStatus() {
     iconContainer.innerHTML = `<svg class="wifi-icon" style="stroke: #32CD32; filter: drop-shadow(0 0 3px rgba(50,205,50,0.5));" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`;
     iconContainer.classList.remove("offline-blink");
     
-    // 如果上線且有佇列，自動觸發同步
     if (queue.length > 0) {
       syncOfflineActions();
     }
@@ -730,7 +755,7 @@ window.addEventListener('online', updateNetworkStatus);
 window.addEventListener('offline', updateNetworkStatus);
 
 // ==========================================
-// 🚀 全域防閒置設定 (修復 Memory Leak)
+// 🚀 全域防閒置設定 
 // ==========================================
 let currentActiveForm = null;
 let inactivityTimer = null;
@@ -752,6 +777,9 @@ function startInactivityTimer() {
   }, 120000); 
 }
 
+// ==========================================
+// 🚀 網域驗證與系統初始化
+// ==========================================
 document.addEventListener("DOMContentLoaded", function() {
   ["mousemove", "keypress", "click", "input", "touchstart"].forEach(event => {
     document.addEventListener(event, () => {
@@ -760,42 +788,35 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   updateNetworkStatus();
+  
+  // 第一關：檢查 IP 環境
+  verifyNetworkEnvironment();
 
-  // ==========================================
-  // 🚀 系統進入時的密碼驗證邏輯
-  // ==========================================
-  if (localStorage.getItem("system_auth_token") !== "verified") {
-    // 顯示全螢幕密碼遮罩
-    document.getElementById("system-auth-overlay").style.display = "flex";
-    
-    // 綁定 Enter 鍵直接登入
-    const pwdInput = document.getElementById("system-password-input");
-    pwdInput.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        verifySystemAuth();
-      }
-    });
+  // 綁定大門密碼輸入框 Enter 鍵
+  document.getElementById("system-password-input").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      verifySystemAuth();
+    }
+  });
 
-    // 聚焦在密碼框
-    setTimeout(() => pwdInput.focus(), 300);
-  }
+  // 綁定內部驗證對話框 Enter 鍵
+  document.getElementById("internal-password-input").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      verifyInternalPassword();
+    }
+  });
 
-  // 以下為原有的初始化載入邏輯
-  loadBorrowUnits();
-  loadNameList();
-
+  // DOM 事件綁定
   document.getElementById("borrow-identity").addEventListener("change", loadNameList);
-
   borrowNameInput = document.getElementById("borrow-name");
   
   if (borrowNameInput) {
     borrowNameInput.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
         e.preventDefault(); 
-        setTimeout(() => {
-          document.getElementById("borrow-barcode").focus();
-        }, 50); 
+        setTimeout(() => document.getElementById("borrow-barcode").focus(), 50); 
       }
     });
 
@@ -803,11 +824,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (typeof Awesomplete !== 'undefined') {
       borrowNameInput._awesomplete = new Awesomplete(borrowNameInput, {
-        minChars: 0,
-        maxItems: 30,
-        autoFirst: true,
-        list: [],
-        sort: false,
+        minChars: 0, maxItems: 30, autoFirst: true, list: [], sort: false,
       });
 
       borrowNameInput.addEventListener("focus", function() {
@@ -824,8 +841,6 @@ document.addEventListener("DOMContentLoaded", function() {
           if (barcodeInput) barcodeInput.focus();
         }, 50);
       });
-    } else {
-      console.warn("Awesomplete 尚未載入，自動完成功能已停用。");
     }
   }
 
@@ -842,9 +857,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const borrowUnitSelect = document.getElementById("borrow-unit");
   if (borrowUnitSelect) {
     borrowUnitSelect.addEventListener("change", function() {
-      setTimeout(() => {
-        document.getElementById("borrow-days").focus();
-      }, 50);
+      setTimeout(() => document.getElementById("borrow-days").focus(), 50);
     });
     borrowUnitSelect.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
@@ -892,16 +905,9 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   let queryBtn = document.getElementById("query-button");
-  if (queryBtn) {
-    queryBtn.style.backgroundColor = "#32CD32"; 
-    queryBtn.style.color = "white";
-  }
-
+  if (queryBtn) queryBtn.style.backgroundColor = "#32CD32"; 
   let clearBtn = document.getElementById("clear-button");
-  if (clearBtn) {
-    clearBtn.style.backgroundColor = "#FF69B4"; 
-    clearBtn.style.color = "white";
-  }
+  if (clearBtn) clearBtn.style.backgroundColor = "#FF69B4"; 
 
   let identityToggleBtn = document.getElementById("identity-toggle-button");
   if (identityToggleBtn) {
@@ -972,8 +978,51 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 // ==========================================
-// 🚀 全域系統登入驗證
+// 🚀 IP 檢查邏輯
 // ==========================================
+function verifyNetworkEnvironment() {
+  if (!navigator.onLine) {
+    document.getElementById('ip-block-overlay').style.display = 'none';
+    checkSystemLogin();
+    return;
+  }
+
+  fetch('https://api.ipify.org?format=json')
+    .then(res => res.json())
+    .then(data => {
+      const ip = data.ip;
+      globalClientIp = ip; // ✅ 存入全域變數供 API 使用
+      
+      // ✅ 嚴格限制：只允許 163.16.54 開頭的網段
+      if (ip.startsWith("163.16.54.")) {
+        document.getElementById('ip-block-overlay').style.display = 'none';
+        checkSystemLogin();
+      } else {
+        document.getElementById('ip-spinner').style.display = 'none';
+        document.getElementById('ip-message').innerHTML = `請在學校網域內使用此系統<br><span style="font-size:18px; color:#666;">(您的目前 IP: ${ip} 不在允許的網段)</span>`;
+      }
+    })
+    .catch(err => {
+      console.error("IP 驗證失敗", err);
+      document.getElementById('ip-block-overlay').style.display = 'none';
+      checkSystemLogin();
+    });
+}
+
+function checkSystemLogin() {
+  if (!localStorage.getItem("system_pwd")) {
+    document.getElementById("system-auth-overlay").style.display = "flex";
+    setTimeout(() => document.getElementById("system-password-input").focus(), 300);
+  } else {
+    initSystemData();
+  }
+}
+
+function initSystemData() {
+  loadBorrowUnits();
+  loadNameList();
+}
+
 function verifySystemAuth() {
   const inputElem = document.getElementById("system-password-input");
   const errorElem = document.getElementById("system-password-error");
@@ -995,10 +1044,10 @@ function verifySystemAuth() {
       inputElem.disabled = false;
       btn.innerText = "確認登入";
 
-      if (response.status === "success") {
-        // 驗證成功，寫入 LocalStorage，隱藏遮罩
-        localStorage.setItem("system_auth_token", "verified");
+      if (response && response.status === "success") {
+        localStorage.setItem("system_pwd", pwd);
         document.getElementById("system-auth-overlay").style.display = "none";
+        initSystemData(); 
       } else {
         errorElem.innerText = "❌ 密碼錯誤，請重試！";
         errorElem.style.display = "block";
@@ -1015,33 +1064,120 @@ function verifySystemAuth() {
 }
 
 // ==========================================
-// 共用 API 呼叫函式 (支援離線暫存邏輯)
+// 🚀 內部功能限制邏輯 (不記憶密碼)
+// ==========================================
+let pendingInternalFormId = null;
+
+function triggerMenuAction(action) {
+  if (['borrow', 'return'].includes(action)) {
+    // 借還設備直接通行
+    showForm(action);
+  } else if (['new', 'query', 'settings'].includes(action)) {
+    // 進階功能：每次強制驗證密碼
+    pendingInternalFormId = action;
+    const pwdInput = document.getElementById("internal-password-input");
+    pwdInput.value = "";
+    document.getElementById("internal-password-error").style.display = "none";
+    document.getElementById("internal-password-dialog").style.display = "flex";
+    setTimeout(() => pwdInput.focus(), 100);
+  }
+}
+
+function closeInternalPasswordDialog() {
+  document.getElementById("internal-password-dialog").style.display = "none";
+  pendingInternalFormId = null;
+}
+
+function verifyInternalPassword() {
+  const pwd = document.getElementById("internal-password-input").value;
+  const errorElem = document.getElementById("internal-password-error");
+  const btn = document.getElementById("btn-verify-internal");
+
+  if (!pwd) return;
+
+  btn.innerText = "驗證中...";
+  document.getElementById("internal-password-input").disabled = true;
+
+  callGasApi("verifyPassword", { password: pwd })
+    .then(response => {
+      btn.innerText = "確認";
+      document.getElementById("internal-password-input").disabled = false;
+
+      if (response && response.status === "success") {
+        // 成功！不存 LocalStorage，直接放行單次操作
+        closeInternalPasswordDialog();
+        if (pendingInternalFormId) {
+          showForm(pendingInternalFormId);
+          pendingInternalFormId = null;
+        }
+      } else {
+        errorElem.style.display = "block";
+        document.getElementById("internal-password-input").value = "";
+        document.getElementById("internal-password-input").focus();
+      }
+    })
+    .catch(err => {
+      btn.innerText = "確認";
+      document.getElementById("internal-password-input").disabled = false;
+      errorElem.innerText = "驗證失敗，請檢查網路！";
+      errorElem.style.display = "block";
+    });
+}
+
+// ==========================================
+// 共用 API 呼叫函式 (支援離線暫存與全域防護)
 // ==========================================
 function callGasApi(action, params = {}) {
   updateNetworkStatus();
   
+  if (action !== "verifyPassword") {
+    params.password = localStorage.getItem("system_pwd") || "";
+  }
+
+  // ✅ 將 IP 附加到 API 請求中做後端雙重驗證
+  params.clientIp = globalClientIp;
+  
   if (!navigator.onLine) {
-    // 只有借用跟歸還可以在斷線時操作
     if (action === "borrowEquipment" || action === "returnEquipment") {
       addOfflineAction(action, params);
       return Promise.resolve({ 
-        status: "success", // 偽裝成成功以清空輸入框
+        status: "success", 
         message: `📴 網路斷線，已暫存於本機，連線後將自動同步！` 
       });
     } else {
-      showFloatingMessage("📡 網路斷線，此功能(查詢/設定/驗證密碼)需要連線！", "error", 3000);
+      if (["getBorrowUnits", "getNameList", "getLastBorrowRecord"].includes(action)) {
+         return Promise.reject(new Error("Offline"));
+      }
+      showFloatingMessage("📡 網路斷線，此功能需要連線！", "error", 3000);
       return Promise.reject(new Error("Offline"));
     }
   }
 
   return fetch(GAS_API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-    },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action: action, ...params })
   }).then(res => res.json())
+    .then(response => {
+      // ✅ 攔截後端回傳的 IP 錯誤
+      if (response && response.message && response.message.includes("非學校網段 IP")) {
+        showFloatingMessage(response.message, "error", 5000);
+        throw new Error("Invalid IP");
+      }
+      // 攔截密碼錯誤
+      if (response && response.message && response.message.includes("拒絕存取")) {
+        localStorage.removeItem("system_pwd");
+        document.getElementById("system-password-input").value = "";
+        document.getElementById("system-auth-overlay").style.display = "flex";
+        showFloatingMessage("🔒 密碼已變更或驗證失效，請重新登入大門！", "error", 4000);
+        if (currentActiveForm) cancelForm(currentActiveForm);
+        throw new Error("Unauthorized");
+      }
+      return response;
+    })
     .catch(error => {
+      if (error.message === "Unauthorized" || error.message === "Offline" || error.message === "Invalid IP") throw error; 
+      
       console.error("API 連線失敗:", error);
       updateNetworkStatus(); 
       
@@ -1051,7 +1187,6 @@ function callGasApi(action, params = {}) {
         if (parent) parent.innerHTML = "";
       });
 
-      // 如果是發送途中斷網，改為本機暫存
       if (action === "borrowEquipment" || action === "returnEquipment") {
           addOfflineAction(action, params);
           showFloatingMessage("📡 連線不穩，已轉為離線暫存，連線後將自動同步！", "info", 4000);
@@ -1062,7 +1197,6 @@ function callGasApi(action, params = {}) {
       }
     });
 }
-
 
 let fullNameList = [];
 let currentList = [];
@@ -1411,13 +1545,13 @@ function cancelForm(formId) {
 }
 
 function openChalkRegistration() {
-      var newWindow = window.open("https://mikania0000.github.io/FJM-CHALK/", "_blank");
-      setTimeout(function() {
-        if(newWindow && !newWindow.closed) {
-          newWindow.close();
-        }
-      }, 120000);
+  var newWindow = window.open("https://mikania0000.github.io/FJM-CHALK/", "_blank");
+  setTimeout(function() {
+    if(newWindow && !newWindow.closed) {
+      newWindow.close();
     }
+  }, 120000);
+}
 
 function openAdvancedSettings() {
   showForm("settings"); 
@@ -1863,7 +1997,7 @@ function toggleScanner(context) {
       },
       (errorMessage) => {}
     ).catch(err => {
-      console.error('啟 ক্যামের器失敗', err);
+      console.error('啟動掃描器失敗', err);
       container.style.display = 'none';
     });
   }
@@ -1924,33 +2058,33 @@ function applyTableFormatting() {
     }
   });
 
-let buttons = table.querySelectorAll(".btn-modify, .btn-delete, .btn-save-edit, .btn-cancel-edit");
-buttons.forEach(btn => {
-  btn.style.width = "100px";
-  btn.style.height = "40px";
-  btn.style.fontSize = "18px";
-  btn.style.border = "none";
-  btn.style.borderRadius = "10px";
-  btn.style.cursor = "pointer";
-  btn.style.margin = "5px";
-  btn.style.display = "inline-flex";
-  btn.style.justifyContent = "center";
-  btn.style.alignItems = "center";
+  let buttons = table.querySelectorAll(".btn-modify, .btn-delete, .btn-save-edit, .btn-cancel-edit");
+  buttons.forEach(btn => {
+    btn.style.width = "100px";
+    btn.style.height = "40px";
+    btn.style.fontSize = "18px";
+    btn.style.border = "none";
+    btn.style.borderRadius = "10px";
+    btn.style.cursor = "pointer";
+    btn.style.margin = "5px";
+    btn.style.display = "inline-flex";
+    btn.style.justifyContent = "center";
+    btn.style.alignItems = "center";
 
-  if (btn.classList.contains("btn-modify")) {
-    btn.style.backgroundColor = "#FFD700"; 
-    btn.style.color = "black";
-  } else if (btn.classList.contains("btn-delete")) {
-    btn.style.backgroundColor = "#B22222"; 
-    btn.style.color = "white";
-  } else if (btn.classList.contains("btn-save-edit")) {
-    btn.style.backgroundColor = "#28a745"; 
-    btn.style.color = "white";
-  } else if (btn.classList.contains("btn-cancel-edit")) {
-    btn.style.backgroundColor = "#FF69B4"; 
-    btn.style.color = "white";
-  }
-});
+    if (btn.classList.contains("btn-modify")) {
+      btn.style.backgroundColor = "#FFD700"; 
+      btn.style.color = "black";
+    } else if (btn.classList.contains("btn-delete")) {
+      btn.style.backgroundColor = "#B22222"; 
+      btn.style.color = "white";
+    } else if (btn.classList.contains("btn-save-edit")) {
+      btn.style.backgroundColor = "#28a745"; 
+      btn.style.color = "white";
+    } else if (btn.classList.contains("btn-cancel-edit")) {
+      btn.style.backgroundColor = "#FF69B4"; 
+      btn.style.color = "white";
+    }
+  });
 }
 
 function submitRepairStatusChange() {

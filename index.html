@@ -1104,11 +1104,11 @@ function verifyInternalPassword() {
       document.getElementById("internal-password-input").disabled = false;
 
       if (response && response.status === "success") {
-        // 成功！不存 LocalStorage，直接放行單次操作
+        // ✅ 修正：先記住目標表單，再關閉視窗 (避免清除待處理的表單 ID)
+        const target = pendingInternalFormId;
         closeInternalPasswordDialog();
-        if (pendingInternalFormId) {
-          showForm(pendingInternalFormId);
-          pendingInternalFormId = null;
+        if (target) {
+          showForm(target);
         }
       } else {
         errorElem.style.display = "block";

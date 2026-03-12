@@ -295,7 +295,7 @@
       .settings-btn { width: 100%; font-size: 20px; }
       .settings-wrapper { flex-direction: column; }
 
-      #password-dialog, #delete-confirm-dialog { width: 90% !important; box-sizing: border-box; }
+      #auth-modal, #delete-confirm-dialog { width: 90% !important; box-sizing: border-box; }
       .repair-card { padding: 20px !important; width: 100% !important; box-sizing: border-box; }
       .repair-actions { flex-direction: column; gap: 10px !important; }
       .repair-actions button { width: 100% !important; }
@@ -337,6 +337,21 @@
   </style>
 </head>
 <body>
+
+  <!-- ===================== 系統登入遮罩 (全域) ===================== -->
+  <div id="system-auth-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
+    <div id="auth-modal" style="background:white; padding:40px 30px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); text-align:center; width: 90%; max-width: 400px;">
+      <h2 style="margin-top:0; color:#1E3A8A; font-size: 32px;">系統登入</h2>
+      <p style="font-size:18px; color:#666; margin-bottom: 20px;">請輸入管理密碼以進入系統</p>
+      <div style="margin: 20px 0;">
+        <input id="system-password-input" type="password" placeholder="請輸入密碼" style="width: 100%; font-size: 28px; padding: 12px; text-align: center; border: 2px solid #ccc; border-radius: 8px; box-sizing: border-box; outline: none;">
+      </div>
+      <button id="btn-verify-system" onclick="verifySystemAuth()" style="font-size:24px; padding:12px 30px; background-color:#4CAF50; color:white; border:none; border-radius:8px; width: 100%; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">確認登入</button>
+      <p id="system-password-error" style="color:#d32f2f; font-size:18px; display:none; margin-top:15px; font-weight: bold;">❌ 密碼錯誤，請重試！</p>
+    </div>
+  </div>
+  <!-- ========================================================= -->
+
   <div class="container">
     <!-- ✅ 網路狀態與離線暫存標籤 -->
     <div id="network-status" title="連線狀態" onclick="syncOfflineActions(true)" style="cursor: pointer;">
@@ -575,21 +590,7 @@
 
   </div> 
 
-  <!-- ===================== 浮動對話框區 ===================== -->
-  <div id="password-dialog" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); text-align:center; z-index:9999;">
-    <p style="font-size:24px; font-weight:bold;">請輸入密碼</p>
-    <div class="form-group" style="margin: 15px 0;">
-      <div class="field-wrapper" style="width: 100%;">
-        <input id="password-input" type="password" style="text-align:center;">
-      </div>
-    </div>
-    <div style="display:flex; justify-content:center; gap:10px;">
-      <button id="btn-verify-pwd" onclick="verifyPassword()" style="font-size:20px; padding:10px 20px; background-color:#4CAF50; color:white; border:none; border-radius:5px;">確認</button>
-      <button onclick="closePasswordDialog()" style="font-size:20px; padding:10px 20px; background-color:#ccc; color:black; border:none; border-radius:5px;">取消</button>
-    </div>
-    <p id="password-error" style="color:red; font-size:18px; display:none; margin-top:10px;">密碼錯誤，請重試！</p>
-  </div>
-
+  <!-- 刪除確認對話框 -->
   <div id="delete-confirm-dialog" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#fff; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.15); padding:32px 24px; z-index:9999; text-align:center;">
     <div style="font-size:28px; color:#d32f2f; margin-bottom:16px;">⚠️ 確定要刪除此設備紀錄嗎？</div>
     <div style="display:flex; justify-content:center; gap:10px;">
@@ -727,8 +728,6 @@ function updateNetworkStatus() {
 
 window.addEventListener('online', updateNetworkStatus);
 window.addEventListener('offline', updateNetworkStatus);
-document.addEventListener("DOMContentLoaded", updateNetworkStatus);
-
 
 // ==========================================
 // 🚀 全域防閒置設定 (修復 Memory Leak)
@@ -759,63 +758,30 @@ document.addEventListener("DOMContentLoaded", function() {
       if (currentActiveForm) startInactivityTimer();
     }, { passive: true });
   });
-});
 
-// ==========================================
-// 共用 API 呼叫函式 (支援離線暫存邏輯)
-// ==========================================
-function callGasApi(action, params = {}) {
   updateNetworkStatus();
-  
-  if (!navigator.onLine) {
-    // 只有借用跟歸還可以在斷線時操作
-    if (action === "borrowEquipment" || action === "returnEquipment") {
-      addOfflineAction(action, params);
-      return Promise.resolve({ 
-        status: "success", // 偽裝成成功以清空輸入框
-        message: `📴 網路斷線，已暫存於本機，連線後將自動同步！` 
-      });
-    } else {
-      showFloatingMessage("📡 網路斷線，此功能(查詢/設定/驗證密碼)需要連線！", "error", 3000);
-      return Promise.reject(new Error("Offline"));
-    }
-  }
 
-  return fetch(GAS_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-    },
-    body: JSON.stringify({ action: action, ...params })
-  }).then(res => res.json())
-    .catch(error => {
-      console.error("API 連線失敗:", error);
-      updateNetworkStatus(); 
-      
-      const bars = document.querySelectorAll('[id$="-progress-bar"]');
-      bars.forEach(bar => {
-        const parent = bar.parentElement?.parentElement;
-        if (parent) parent.innerHTML = "";
-      });
-
-      // 如果是發送途中斷網，改為本機暫存
-      if (action === "borrowEquipment" || action === "returnEquipment") {
-          addOfflineAction(action, params);
-          showFloatingMessage("📡 連線不穩，已轉為離線暫存，連線後將自動同步！", "info", 4000);
-          return { status: "success", message: "轉為離線儲存" }; 
-      } else {
-          showFloatingMessage("📡 網路連線異常，請確認網路狀態後重試！", "error", 4000);
-          throw error;
+  // ==========================================
+  // 🚀 系統進入時的密碼驗證邏輯
+  // ==========================================
+  if (localStorage.getItem("system_auth_token") !== "verified") {
+    // 顯示全螢幕密碼遮罩
+    document.getElementById("system-auth-overlay").style.display = "flex";
+    
+    // 綁定 Enter 鍵直接登入
+    const pwdInput = document.getElementById("system-password-input");
+    pwdInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        verifySystemAuth();
       }
     });
-}
 
+    // 聚焦在密碼框
+    setTimeout(() => pwdInput.focus(), 300);
+  }
 
-let fullNameList = [];
-let currentList = [];
-let borrowNameInput = null;
-
-document.addEventListener("DOMContentLoaded", function() {
+  // 以下為原有的初始化載入邏輯
   loadBorrowUnits();
   loadNameList();
 
@@ -955,7 +921,152 @@ document.addEventListener("DOMContentLoaded", function() {
   if (tableContainer) {
     observer.observe(tableContainer, { childList: true, subtree: true });
   }
+
+  monitorInputFormat("borrow-barcode", "barcode", "borrow");
+  monitorInputFormat("return-barcode", "barcode", "return"); 
+  monitorInputFormat("query-barcode", "barcode", "query");
+  monitorInputFormat("borrow-name", "name", "borrow");
+  monitorInputFormat("query-name", "name", "query");
+
+  const returnInput = document.getElementById("return-barcode");
+  let firstInputTime = 0;
+  let lastCharTime = 0;
+  let lastValue = "";
+  let isSubmitting = false;
+
+  if (returnInput) {
+    returnInput.addEventListener("input", () => {
+      const now = Date.now();
+      const val = returnInput.value.trim();
+
+      if (val.length === 1 || val !== lastValue) {
+        if (val.length === 1) firstInputTime = now;
+        lastCharTime = now;
+        lastValue = val;
+      }
+
+      const totalInputDuration = now - firstInputTime;
+      const lastCharGap = now - lastCharTime;
+
+      const isScanner = val.length >= 4 && totalInputDuration <= 400 && lastCharGap <= 300 && !isSubmitting;
+
+      if (isScanner) {
+        isSubmitting = true;
+        setTimeout(() => {
+          submitReturnForm();
+          firstInputTime = 0;
+          lastCharTime = 0;
+          lastValue = "";
+          isSubmitting = false;
+        }, 100);
+      }
+    });
+
+    returnInput.addEventListener("blur", () => {
+      firstInputTime = 0;
+      lastCharTime = 0;
+      lastValue = "";
+      isSubmitting = false;
+    });
+  }
 });
+
+// ==========================================
+// 🚀 全域系統登入驗證
+// ==========================================
+function verifySystemAuth() {
+  const inputElem = document.getElementById("system-password-input");
+  const errorElem = document.getElementById("system-password-error");
+  const btn = document.getElementById("btn-verify-system");
+  const pwd = inputElem.value;
+  
+  if (!pwd) {
+    errorElem.innerText = "請輸入密碼！";
+    errorElem.style.display = "block";
+    return;
+  }
+
+  inputElem.disabled = true;
+  btn.innerText = "驗證中...";
+  errorElem.style.display = "none";
+
+  callGasApi("verifyPassword", { password: pwd })
+    .then(response => {
+      inputElem.disabled = false;
+      btn.innerText = "確認登入";
+
+      if (response.status === "success") {
+        // 驗證成功，寫入 LocalStorage，隱藏遮罩
+        localStorage.setItem("system_auth_token", "verified");
+        document.getElementById("system-auth-overlay").style.display = "none";
+      } else {
+        errorElem.innerText = "❌ 密碼錯誤，請重試！";
+        errorElem.style.display = "block";
+        inputElem.value = "";
+        inputElem.focus();
+      }
+    })
+    .catch(err => {
+      inputElem.disabled = false;
+      btn.innerText = "確認登入";
+      errorElem.innerText = "⚠️ 驗證失敗，請檢查網路！";
+      errorElem.style.display = "block";
+    });
+}
+
+// ==========================================
+// 共用 API 呼叫函式 (支援離線暫存邏輯)
+// ==========================================
+function callGasApi(action, params = {}) {
+  updateNetworkStatus();
+  
+  if (!navigator.onLine) {
+    // 只有借用跟歸還可以在斷線時操作
+    if (action === "borrowEquipment" || action === "returnEquipment") {
+      addOfflineAction(action, params);
+      return Promise.resolve({ 
+        status: "success", // 偽裝成成功以清空輸入框
+        message: `📴 網路斷線，已暫存於本機，連線後將自動同步！` 
+      });
+    } else {
+      showFloatingMessage("📡 網路斷線，此功能(查詢/設定/驗證密碼)需要連線！", "error", 3000);
+      return Promise.reject(new Error("Offline"));
+    }
+  }
+
+  return fetch(GAS_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify({ action: action, ...params })
+  }).then(res => res.json())
+    .catch(error => {
+      console.error("API 連線失敗:", error);
+      updateNetworkStatus(); 
+      
+      const bars = document.querySelectorAll('[id$="-progress-bar"]');
+      bars.forEach(bar => {
+        const parent = bar.parentElement?.parentElement;
+        if (parent) parent.innerHTML = "";
+      });
+
+      // 如果是發送途中斷網，改為本機暫存
+      if (action === "borrowEquipment" || action === "returnEquipment") {
+          addOfflineAction(action, params);
+          showFloatingMessage("📡 連線不穩，已轉為離線暫存，連線後將自動同步！", "info", 4000);
+          return { status: "success", message: "轉為離線儲存" }; 
+      } else {
+          showFloatingMessage("📡 網路連線異常，請確認網路狀態後重試！", "error", 4000);
+          throw error;
+      }
+    });
+}
+
+
+let fullNameList = [];
+let currentList = [];
+let borrowNameInput = null;
 
 function loadNameList() {
   let identity = document.getElementById("borrow-identity").value;
@@ -1233,7 +1344,7 @@ function loadLastBorrowRecord() {
   });
 }
 
-function showForm(formId, fromPassword = false) {
+function showForm(formId) {
   Object.keys(scanners).forEach(key => {
     if (scanners[key]) {
       scanners[key].stop().then(() => {
@@ -1243,15 +1354,6 @@ function showForm(formId, fromPassword = false) {
       }).catch(err => console.error('掃描器關閉失敗:', err));
     }
   });
-
-  document.getElementById("password-dialog").style.display = "none";
-
-  if (["new", "query", "settings"].includes(formId) && !fromPassword) {
-    openPasswordDialog(formId);
-    return;
-  }
-
-  window.passwordVerified = false;
 
   document.querySelectorAll('.form-section').forEach(section => {
     section.classList.remove('active');
@@ -1309,7 +1411,6 @@ function cancelForm(formId) {
 }
 
 function openChalkRegistration() {
-   document.getElementById("password-dialog").style.display = "none";
       var newWindow = window.open("https://mikania0000.github.io/FJM-CHALK/", "_blank");
       setTimeout(function() {
         if(newWindow && !newWindow.closed) {
@@ -1319,7 +1420,6 @@ function openChalkRegistration() {
     }
 
 function openAdvancedSettings() {
-  document.getElementById("password-dialog").style.display = "none";
   showForm("settings"); 
 }
 
@@ -1769,76 +1869,6 @@ function toggleScanner(context) {
   }
 }
 
-let pendingFormId = null;
-window.passwordVerified = false;
-
-function openPasswordDialog(formId) {
-  document.querySelectorAll('.form-section').forEach(section => {
-    section.classList.remove('active');
-  });
-
-  pendingFormId = formId;
-  document.getElementById("password-dialog").style.display = "block";
-  document.getElementById("password-input").value = "";
-  document.getElementById("password-error").style.display = "none";
-  
-  setTimeout(() => document.getElementById("password-input").focus(), 100);
-
-  const inputElem = document.getElementById("password-input");
-  inputElem.onkeydown = function(event) {
-    if (event.key === "Enter") {
-      event.preventDefault(); 
-      verifyPassword();      
-    }
-  };
-}
-
-// 🌟 修改：密碼驗證改呼叫 Google Apps Script 
-function verifyPassword() {
-  const inputElem = document.getElementById("password-input");
-  const errorElem = document.getElementById("password-error");
-  const btn = document.getElementById("btn-verify-pwd");
-  const input = inputElem.value;
-  
-  if (!input) return;
-
-  // 避免連點
-  inputElem.disabled = true;
-  btn.innerText = "驗證中...";
-  errorElem.style.display = "none";
-
-  callGasApi("verifyPassword", { password: input })
-    .then(response => {
-      inputElem.disabled = false;
-      btn.innerText = "確認";
-
-      if (response.status === "success") {
-        passwordVerified = true;
-        closePasswordDialog();
-        if (pendingFormId) {
-          const target = pendingFormId;
-          pendingFormId = null;
-          setTimeout(() => { showForm(target, true); }, 100); 
-        }
-      } else {
-        errorElem.innerText = "❌ 密碼錯誤，請重試！";
-        errorElem.style.display = "block";
-        setTimeout(() => { errorElem.style.display = "none"; }, 2000);
-      }
-    })
-    .catch(err => {
-      inputElem.disabled = false;
-      btn.innerText = "確認";
-      errorElem.innerText = "⚠️ 驗證失敗，請檢查網路！";
-      errorElem.style.display = "block";
-      setTimeout(() => { errorElem.style.display = "none"; }, 2000);
-    });
-}
-
-function closePasswordDialog() {
-  document.getElementById("password-dialog").style.display = "none";
-}
-
 function cancelEditMode(uuid, originalUnit, originalDays) {
   const cellDays = document.getElementById(`days-cell-${uuid}`);
   const cellUnit = document.getElementById(`unit-cell-${uuid}`);
@@ -2080,56 +2110,6 @@ function monitorInputFormat(inputId, type, formId) {
   if (type === "barcode") inputElem.addEventListener("input", checkBarcode);
   if (type === "name") inputElem.addEventListener("input", checkName);
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  monitorInputFormat("borrow-barcode", "barcode", "borrow");
-  monitorInputFormat("return-barcode", "barcode", "return"); 
-  monitorInputFormat("query-barcode", "barcode", "query");
-  monitorInputFormat("borrow-name", "name", "borrow");
-  monitorInputFormat("query-name", "name", "query");
-
-  const returnInput = document.getElementById("return-barcode");
-  let firstInputTime = 0;
-  let lastCharTime = 0;
-  let lastValue = "";
-  let isSubmitting = false;
-
-  if (returnInput) {
-    returnInput.addEventListener("input", () => {
-      const now = Date.now();
-      const val = returnInput.value.trim();
-
-      if (val.length === 1 || val !== lastValue) {
-        if (val.length === 1) firstInputTime = now;
-        lastCharTime = now;
-        lastValue = val;
-      }
-
-      const totalInputDuration = now - firstInputTime;
-      const lastCharGap = now - lastCharTime;
-
-      const isScanner = val.length >= 4 && totalInputDuration <= 400 && lastCharGap <= 300 && !isSubmitting;
-
-      if (isScanner) {
-        isSubmitting = true;
-        setTimeout(() => {
-          submitReturnForm();
-          firstInputTime = 0;
-          lastCharTime = 0;
-          lastValue = "";
-          isSubmitting = false;
-        }, 100);
-      }
-    });
-
-    returnInput.addEventListener("blur", () => {
-      firstInputTime = 0;
-      lastCharTime = 0;
-      lastValue = "";
-      isSubmitting = false;
-    });
-  }
-});
 
 function showFormMessage(formId, message, color, size, timeout) {
   const resultElem = document.getElementById(`${formId}-result`);
